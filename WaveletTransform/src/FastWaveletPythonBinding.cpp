@@ -5,6 +5,7 @@
 //
 
 
+
 #include "FastWavelet.h"
 #include "PybindArgumentConversion.h"
 #include <ThirdParty/pybind/pybind11/include/pybind11/pybind11.h>
@@ -13,15 +14,16 @@
 
 
 namespace py = pybind11;
+using namespace cupcake;
 
 
 
 PYBIND11_PLUGIN(FastWavelet) {
     py::module m("FastWavelet", "C++ implementation of the fast wavelet transform");
     
-    py::class_<analysis::FastWavelet>(m, "FastWavelet")
-        .def(py::init<>())
-        .def("PushSamples", make_wrapped_vec_fun< analysis::FastWavelet, float, py::array_t<double>>(&analysis::FastWavelet::PushSamples));
+    py::class_<cupcake::FastWavelet>(m, "FastWavelet")
+        .def("__init__", &cupcake::py_wrapped_ctor< FastWavelet, size_t, size_t, py::array_t<float>> )
+        .def("PushSamples", make_wrapped_vec_fun< FastWavelet, float, py::array_t<float>>(&FastWavelet::PushSamples));
 
     return m.ptr();
 };

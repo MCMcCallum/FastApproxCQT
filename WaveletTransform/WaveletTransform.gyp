@@ -11,10 +11,13 @@
           'include',
         ],
         'sources': [
+          'src/AudioBuffer.h',
           'src/FastWavelet.h',
           'src/FastWavelet.cpp',
           'src/FastWaveletPythonBinding.cpp',
           'src/PybindArgumentConversion.h',
+          'src/STFT.h',
+          'src/VectorFunctions.h',
         ],
         'link_settings': {
           'libraries': [
