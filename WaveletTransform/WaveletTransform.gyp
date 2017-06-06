@@ -1,61 +1,79 @@
   {
-    'includes': [
+    'includes': 
+    [
       '../../../build/common.gypi',
+      '../../../VecLib/VecLib.gypi',
     ],
-    'targets': [
+    'targets': 
+    [
       {
         'target_name': 'WaveletTransformLib',
         'type': 'shared_library',
-        'include_dirs': [
-          '.',
-          'include',
+        'include_dirs': 
+        [
+          './src',
         ],
-        'sources': [
+
+        'sources': 
+        [
           'src/AudioBuffer.h',
           'src/FastWavelet.h',
           'src/FastWavelet.cpp',
           'src/FastWaveletPythonBinding.cpp',
           'src/PybindArgumentConversion.h',
-          'src/STFT.h',
-          'src/VectorFunctions.h',
+
+          'src/OverlapAddBuffer.h',
+          'src/STFTAnalysis.h',
+          'src/STFTSynthesis.h',
         ],
-        'link_settings': {
+
+        'link_settings': 
+        {
           'libraries': [
-            '$(SDKROOT)/System/Library/Frameworks/Accelerate.framework',
             '$(SDKROOT)/System/Library/Frameworks/Python.framework',
-            '$(SDKROOT)/System/Library/Frameworks/CoreFoundation.framework',
           ],
         },
-        'conditions': [
-          ['OS!="win"', {
-            'xcode_settings' : {
-              'OTHER_CPLUSPLUSFLAGS' : [ # @todo [matt.mcc 03/25/17] All the below flags are required for python compilation... We need to sort through these...
-              '-fno-strict-aliasing',
-              '-fno-common',
-              '-dynamic',
-              '-g',
-              '-Os',
-              '-pipe', 
-              '-fno-common',
-              '-fno-strict-aliasing',
-              '-fwrapv',
-              '-DENABLE_DTRACE',
-              '-DMACOSX',
-              '-DNDEBUG',
-              '-Wall',
-              '-Wstrict-prototypes',
-              '-Wshorten-64-to-32',
-              '-DNDEBUG',
-              '-g',
-              '-fwrapv',
-              '-Os',
-              '-Wall',
-              '-Wstrict-prototypes',
-              '-DENABLE_DTRACE', 
-              ],
-            }
-          }],
+      },
+
+      {
+        'target_name': 'test',
+        'type': 'executable',
+
+        'include_dirs': 
+        [
+          './src',
         ],
+
+        'sources': 
+        [
+          'src/AudioBuffer.h',
+          'src/FastWavelet.h',
+          'src/FastWavelet.cpp',
+          'src/FastWaveletPythonBinding.cpp',
+          'src/PybindArgumentConversion.h',
+
+          'src/OverlapAddBuffer.h',
+          'src/STFTAnalysis.h',
+          'src/STFTSynthesis.h',
+
+          'test/TestAudioBuffer.cpp',
+          'test/TestOverlapAddBuffer.cpp',
+          'test/TestSTFTAnalysis.cpp',
+          'test/TestSTFTAnalysisSynthesis.cpp',
+          'test/TestSTFTSynthesis.cpp',
+        ],
+
+        'link_settings': 
+        {
+          'libraries': 
+          [
+            '$(SDKROOT)/System/Library/Frameworks/Python.framework',
+            '<(thirdparty_lib_dir)/libgtest.a',
+            '<(thirdparty_lib_dir)/libgtest_main.a',
+          ],
+        },
       },
     ],
   }
+
+

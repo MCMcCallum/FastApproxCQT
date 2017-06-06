@@ -35,7 +35,7 @@ private:
     // Parameters
     
     // Mechanics
-    std::unique_ptr<STFT<FAST_WAVELET_FFT_SIZE>> mSTFT;
+//    std::unique_ptr<STFT<FAST_WAVELET_FFT_SIZE>> mSTFT;
     
     // Data
     std::vector<float> mOutputBuffer;

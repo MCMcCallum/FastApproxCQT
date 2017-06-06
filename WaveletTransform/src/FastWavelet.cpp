@@ -8,6 +8,7 @@
 
 #include "FastWavelet.h"
 #include "STFT.h"
+#include <iostream>
 
 
 
@@ -18,7 +19,7 @@ using namespace cupcake;
 FastWavelet::FastWavelet( size_t win_len,
                           size_t hop,
                           const std::vector<float>& window ) :
-mSTFT( new STFT<FastWavelet::FAST_WAVELET_FFT_SIZE>( win_len, hop, window ) ),
+//mSTFT( new STFT<FastWavelet::FAST_WAVELET_FFT_SIZE>( win_len, hop, window ) ),
 mOutputBuffer( FastWavelet::FAST_WAVELET_FFT_SIZE, 0.0 )
 ///
 /// Constructor
@@ -37,10 +38,17 @@ float FastWavelet::PushSamples( const std::vector<float>& audio )
 {
     
     // Circular buffer, window, and STFT
-    const std::vector<std::array<std::complex<float>, FastWavelet::FAST_WAVELET_FFT_SIZE>>& stft_output = mSTFT->PushSamples( audio );
+//    const std::vector<std::array<std::complex<float>, FastWavelet::FAST_WAVELET_FFT_SIZE>>& stft_output = mSTFT->PushSamples( audio );
+    
+//    std::cout << "\nOutput is " << stft_output.size() << " frames.\n";
+//    std::cout << "First frame is " << stft_output[0].size() << " elements.\n";
+//    for( auto& element : stft_output[0] )
+//    {
+//        std::cout << element.real() << " + " << element.imag() << "j,\n";
+//    }
     
     // Take magnitude
-    fvec_complex_magnitude( stft_output[0].data(), mOutputBuffer.data(), FastWavelet::FAST_WAVELET_FFT_SIZE );
+//    fvec_complex_magnitude( stft_output[0].data(), mOutputBuffer.data(), FastWavelet::FAST_WAVELET_FFT_SIZE );
     
     return mOutputBuffer[0];
     

@@ -1,5 +1,6 @@
 //
-// Created: 03/25/17 by Matthew McCallum
+// Created by: Matthew McCallum
+// 4th June 2017
 //
 // FIFO buffer for audio - could be used in the future to wrap a circular buffer.
 //
@@ -7,132 +8,213 @@
 #ifndef CUPCAKE_AUDIO_BUFFER_H
 #define CUPCAKE_AUDIO_BUFFER_H
 
+// In module includes
+// None.
+
+// Thirdparty includes
+// None.
+
+// Std Lib includes
 #include <vector>
+#include <algorithm>
 #include <assert.h>
 
 namespace cupcake
 {
-    
+
 template< typename T >
 class AudioBuffer
 {
     
 public:
-    
-    AudioBuffer( size_t size );
-    
-    void AddSamples( const std::vector<T>& samples );
-    
-    void RemoveSamples( size_t num_samples );
-    
-    size_t NumSamples();
-    
-    size_t Size();
+
+	AudioBuffer();
+	AudioBuffer( size_t size );
+	~AudioBuffer();
+
+	void PushSamples( const std::vector< T >& samples );
+	void PopFront( size_t numElements );
+
+	const size_t NumSamples() const;
+	const size_t SpaceRemaining() const;
+    const size_t Size() const;
     
     const T* Data();
-    
-    // Index Operator
-    
-    // Iterator
-    
+
 private:
-    
-    // Parameters
-    
-    // Mechanics
-    size_t mWritePointer;
-    
-    // Data
-    std::vector<T> mBuffer;
-    
+
+	//
+	// Data
+	//
+	std::vector< T > mData;
+
+	//
+	// Configuration
+	//
+	const size_t mBufferLength;
+
+	//
+	// Mechanics
+	//
+	size_t mReadHead;
+	size_t mWriteHead;
+
+	//
+	// Constants
+	//
+	static const size_t DEFAULT_BUFFER_SIZE = 44100*10;
 };
-    
-template< typename  T >
-AudioBuffer<T>::AudioBuffer( size_t size ) :
-mWritePointer( 0 ),
-mBuffer( size, 0 )
+
+template< typename T >
+AudioBuffer<T>::AudioBuffer() :
+	mData( 2*(DEFAULT_BUFFER_SIZE+1) ),
+	mBufferLength( DEFAULT_BUFFER_SIZE+1 ),
+	mReadHead( 0 ),
+	mWriteHead( 0 )
 ///
-/// Constructor.
+/// Default Constructor.
 ///
 {
     
 }
 
-template< typename  T >
-void AudioBuffer<T>::AddSamples( const std::vector<T>& samples )
+template< typename T >
+AudioBuffer<T>::AudioBuffer( size_t size ) :
+	mData( 2*(size+1) ),
+	mBufferLength( size+1 ),
+	mReadHead( 0 ),
+	mWriteHead( 0 )
+///
+/// Constructor.
+///
+/// @param size
+///  The maximum number of elements allowable in the buffer.
+///
+{
+    
+}
+    
+template< typename T >
+AudioBuffer<T>::~AudioBuffer()
+///
+/// Destructor.
+///
+{
+    
+}
+
+template< typename T >
+void AudioBuffer<T>::PushSamples( const std::vector< T >& samples )
 ///
 /// Copy samples into the AudioBuffer's memory. It is on the user of the class
 /// to ensure the buffer doesn't overflow.
+/// This copies the samples twice so that when reading from the buffer
+/// overlaps the end of the circular buffer, we can still get a contiguous
+/// block of memory with as many of the buffer samples as we like, without
+/// having to rearrange the memory.
 ///
 /// @param samples
 ///  A vector of samples to be added to the AudioBuffer.
 ///
 {
 
-    assert( samples.size() < ( mBuffer.size() - mWritePointer ) ); // Buffer overflow.
-    
-    memcpy( mBuffer.data() + mWritePointer, samples.data(), sizeof( T )*samples.size() );
-    mWritePointer += samples.size();
-    
+    assert( samples.size() <= SpaceRemaining() ); // Buffer overflow if this condition is false.
+
+    size_t samples_until_end = mBufferLength - mWriteHead;
+
+	memcpy( mData.data() + mWriteHead, samples.data(), std::min( samples.size(), samples_until_end )*sizeof( T ) );
+	memcpy( mData.data() + mWriteHead + mBufferLength, samples.data(), std::min( samples.size(), samples_until_end )*sizeof( T ) );
+
+	if( samples.size() > samples_until_end )
+	{
+		memcpy( mData.data(), samples.data() + samples_until_end, ( samples.size() - samples_until_end )*sizeof( T ) );
+		memcpy( mData.data() + mBufferLength, samples.data() + samples_until_end, ( samples.size() - samples_until_end )*sizeof( T ) );
+	}
+
+	mWriteHead = ( mWriteHead + samples.size() ) % mBufferLength;
+
 }
 
-template< typename  T >
-void AudioBuffer<T>::RemoveSamples( size_t num_samples )
+template< typename T >
+void AudioBuffer<T>::PopFront( size_t numElements )
 ///
 /// Clear a number of (the oldest) samples from the beginning of the buffer. It is
 /// on the user of the class to ensure they do not clear more samples than are in the
 /// buffer. This frees up room for new samples to be added to the buffer.
+/// If the number of samples requested is more than or equal to that in the buffer, 
+/// the buffer is simply reset to start reading and writing at its first index.
 ///
-/// @param num_samples
+/// @param numElements
 ///  The number of values to erase from the start of the buffer.
 ///
 {
-    
-    assert( num_samples <= write_pointer ); // Tried to erase more samples than exist in buffer.
-    
-    memmove( mBuffer.data(), mBuffer.data() + num_samples, sizeof( T )*( mWritePointer - num_samples ) );
-    mWritePointer -= num_samples;
-    
+
+	if( numElements >= NumSamples() )
+	{
+		mReadHead = 0;
+		mWriteHead = 0;
+	}
+	else
+	{
+		mReadHead = ( mReadHead + numElements ) % mBufferLength;
+	}
+	
+}
+
+template< typename T >
+const size_t AudioBuffer<T>::NumSamples() const
+///
+/// Returns the number of samples remaining in the buffer.
+///
+/// @return
+///  The number of samples remaining in the buffer.
+///
+{
+
+	size_t num_samples = mWriteHead >= mReadHead ? mWriteHead - mReadHead : mWriteHead + mBufferLength - mReadHead;
+	return num_samples;
+
+}
+
+template< typename T >
+const size_t AudioBuffer<T>::SpaceRemaining() const
+///
+/// Returns the number of samples beyond which will cause a buffer overflow.
+///
+/// @return
+///  The number of samples that can be added before buffer overflow occurs.
+///
+{
+
+	return mBufferLength - 1 - NumSamples(); // minus 1 because mReadHead==mWriteHead cannot be in the same place unless the buffer is empty.
+
 }
     
 template< typename T >
-size_t AudioBuffer<T>::NumSamples()
+const size_t AudioBuffer<T>::Size() const
 ///
-/// Returns the number of samples currently in the buffer.
-///
-/// @return
-///  The number of samples currently in the buffer.
-///
-{
-    return mWritePointer;
-}
-    
-template< typename T >
-size_t AudioBuffer<T>::Size()
-///
-/// Returns the capacity of the buffer, i.e., the maximum number of samples that fit
-/// inside the buffer.
+/// Returns the maximum number of elements in total that can be written to an empty buffer.
 ///
 /// @return
-///  The buffer's capacity.
+///  The number of elements in the buffer.
 ///
 {
-    return mBuffer.size();
+    return mBufferLength - 1;
 }
-    
+
 template< typename T >
 const T* AudioBuffer<T>::Data()
 ///
-/// Returns a pointer to the first (oldest) element in the buffer memory. This is
-/// useful for fast operations (without copy) that operate on the buffer memory.
+/// Getter function returning a pointer to the first element of the contiguous
+/// data in the buffer.
 ///
 /// @return
-///  A pointer to the first (oldest) element in the buffer.
+///  A pointer to the first element in the buffer.
 ///
 {
-    return mBuffer.data();
+    return mData.data() + mReadHead;
 }
-    
+
 } // namespace cupcake
 
 #endif // CUPCAKE_AUDIO_BUFFER_H

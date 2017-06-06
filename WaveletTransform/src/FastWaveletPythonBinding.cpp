@@ -8,8 +8,8 @@
 
 #include "FastWavelet.h"
 #include "PybindArgumentConversion.h"
-#include <ThirdParty/pybind/pybind11/include/pybind11/pybind11.h>
-#include <ThirdParty/pybind/pybind11/include/pybind11/numpy.h>
+#include "pybind/pybind11.h"
+#include "pybind/numpy.h"
 
 
 
