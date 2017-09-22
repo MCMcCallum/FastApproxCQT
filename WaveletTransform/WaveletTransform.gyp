@@ -17,6 +17,7 @@
         'sources': 
         [
           'src/AudioBuffer.h',
+          'src/CQT.h',
           'src/FastWavelet.h',
           'src/FastWavelet.cpp',
           'src/FastWaveletPythonBinding.cpp',
@@ -47,6 +48,7 @@
         'sources': 
         [
           'src/AudioBuffer.h',
+          'src/CQT.h',
           'src/FastWavelet.h',
           'src/FastWavelet.cpp',
           'src/FastWaveletPythonBinding.cpp',
