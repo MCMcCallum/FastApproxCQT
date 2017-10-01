@@ -8,6 +8,7 @@
 
 #include "pybind/pybind11.h"
 #include "pybind/numpy.h"
+#include "pybind/complex.h"
 #include <iostream>
 
 
@@ -26,7 +27,7 @@ namespace cupcake
 //
     
 //
-// Specify conversion mapping from python arguments/return values to C++ arguments/return values for functions.
+// Specify conversion mapping from python arguments to C++ arguments for functions.
 //
 // The usual default case.
 template< typename T >
@@ -34,16 +35,6 @@ struct cpp_argument_type{ typedef T type; };
 // Map std::vector<float> to py::array_t<float>, and its references.
 template<>
 struct cpp_argument_type<py::array_t<float, 16>>{ typedef const std::vector<float>& type; };
-
-//
-// Specify mapping from C++ arguments to Python arguments for return values.
-//
-// The usual default case.
-template< typename T >
-struct python_return_type{ typedef T type; };
-// Map std::vector<float> to py::array_t<float>.
-template<>
-struct python_return_type<std::vector<float>>{ typedef py::array_t<float> type; };
 
 
     
@@ -88,7 +79,7 @@ const std::vector<float> convert_arg<py::array_t<float>>( py::array_t<float>&& x
     if (info_x.ndim != 1)
         throw std::runtime_error("Number of dimensions must be one");
     
-    std::vector<float> ret( (float*)info_x.ptr, ( (float*)info_x.ptr ) + ( info_x.shape[0]-1 )  );
+    std::vector<float> ret( (float*)info_x.ptr, ( (float*)info_x.ptr ) + ( info_x.shape[0] )  );
     
     // @note [matt.mccallum 09.30.17] Return value optimization as specified in the C++ standard - 12.8 (32), states
     //                                that an lvalue here is treated as an rvalue for overload resolution.
@@ -104,7 +95,7 @@ const std::vector<float> convert_arg<py::array_t<float>>( py::array_t<float>&& x
 //
     
 template< typename arg >
-typename python_return_type<arg>::type convert_return( arg& x )
+arg convert_return( arg& x )
 ///
 /// Function for converting C++ function return values to python types. This one simply copies
 /// its arguments to return value. This will in effect copy the argument passed in, so there
@@ -117,12 +108,10 @@ typename python_return_type<arg>::type convert_return( arg& x )
 ///  The same argument to be copied as a return value.
 ///
 {
-    std::cout << "convert return...\n";
-    return x;
+    return x; // @todo [matt.mccallum 10.01.17] This might copy the vector back to the output, not so great...
 }
 
-template<>
-py::array_t<float> convert_return<std::vector<float>>( std::vector<float>& x )
+py::array_t<float> convert_return( std::vector<float>& x )
 ///
 /// Converts a vector (likely returned from a C++ function) to a python array, that may be used
 /// back in python.
@@ -134,9 +123,34 @@ py::array_t<float> convert_return<std::vector<float>>( std::vector<float>& x )
 ///  An array python can understand.
 ///
 {
-    std::cout << "convert return v...\n";
     py::array_t<float> ret( x.size(), x.data() );
-    return ret; // This is going to copy the vector back to the output, not so great...
+    return ret; // This will not copy the object on return as specified in return value optimization as specified in the C++ standard - 12.8 (32)
+}
+    
+template< size_t ARRAY_SIZE >
+py::array_t<std::complex<float>> convert_return( std::vector<std::array<std::complex<float>, ARRAY_SIZE>>& x )
+///
+/// Converts a two dimensional complex valued C++ data block into a two dimensional Python array.
+///
+/// @param x
+///  The two dimensional C++ array to be converted into a python array.
+///
+/// @return
+///  The python C++ object that is interpretable by pybind11 and hence Python.
+///
+{
+    std::vector<size_t> shape(2, 0);
+    std::vector<size_t> strides(2, 0);
+    shape[0] = x.size();
+    shape[1] = x[0].size();
+    strides[0] = x.size()*sizeof( std::complex<float> );
+    strides[1] = 1*sizeof( std::complex<float> );
+    
+    py::array_t<std::complex<float>> ret( shape,
+                                         strides,
+                                         x[0].data() );
+
+    return ret; // This will not copy the object on return as specified in return value optimization as specified in the C++ standard - 12.8 (32)
 }
     
     
@@ -168,7 +182,7 @@ template< typename... args, typename obj, typename ret >
 auto py_wrapped_func( ret (obj::*f)( typename cpp_argument_type<args>::type... ) )
 ///
 /// A factory function for creating function pointers that wrap up class methods and automatically
-/// convert all function arguments before calling the C++ function.
+/// convert all function arguments to/from python types, before and after calling the C++ function.
 ///
 /// @param f
 ///  The function pointer to be wrapped up.
@@ -179,8 +193,8 @@ auto py_wrapped_func( ret (obj::*f)( typename cpp_argument_type<args>::type... )
 {
     return [f]( obj* o, args... a )
     {
-        ret x = (o->*f)( convert_arg( std::forward<args>( a ) )... );
-        typename python_return_type<ret>::type y = convert_return( x );
+        auto x = (o->*f)( convert_arg( std::forward<args>( a ) )... );
+        auto y = convert_return( x );
         return y;
     };
 }

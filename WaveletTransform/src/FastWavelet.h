@@ -7,6 +7,8 @@
 #ifndef CUPCAKE_FAST_WAVELET_H
 #define CUPCAKE_FAST_WAVELET_H
 
+#include "FFT.h"
+
 #include <vector>
 #include <memory>
 
@@ -25,8 +27,12 @@ class FastWavelet
 public:
     FastWavelet( float overlap, const std::vector<float>& window );
 	~FastWavelet();
-
-    float PushSamples( const std::vector<float>& audio );
+    
+    static const size_t mOutputSize = get_output_FFT_size( FAST_WAVELET_FFT_SIZE );
+    
+    std::vector< std::array< std::complex< float >, mOutputSize > >& PushSamples( const std::vector<float>& audio );
+    
+    std::vector< float > GetWindow();
 
 private:
     

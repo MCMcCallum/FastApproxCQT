@@ -17,13 +17,13 @@ namespace py = pybind11;
 using namespace cupcake;
 
 
-
 PYBIND11_PLUGIN(FastWavelet) {
     py::module m("FastWavelet", "C++ implementation of the fast wavelet transform");
     
     py::class_<cupcake::FastWavelet>(m, "FastWavelet")
         .def( "__init__", &py_wrapped_ctor< FastWavelet, float, py::array_t<float> > )
-        .def( "PushSamples", py_wrapped_func< py::array_t<float> >( &FastWavelet::PushSamples ) );
+        .def( "PushSamples", py_wrapped_func< py::array_t<float> >( &FastWavelet::PushSamples ) )
+        .def( "GetWindow", py_wrapped_func( &FastWavelet::GetWindow ) );
 
     return m.ptr();
 };

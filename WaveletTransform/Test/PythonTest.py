@@ -1,5 +1,6 @@
 
 import numpy as np
+import matplotlib.pyplot as plt
 import FastWavelet
 
 window = np.hamming(256)
@@ -304,14 +305,12 @@ input = np.array([0.23761270765220133,
 0.1899403258454565,
 0.99089079052515594,
 0.45001224249150606])
-answer = np.sum(window*input[0:256])
+
+
+answer = np.fft.fft(window*input[0:256], 4096)
 result = FWL.PushSamples(input)
-print "The Answer Is: " + repr(answer)
-print "We Got: " + repr(result)
 
-print " "
-
-# plt.figure()
-# plt.plot(np.abs(output))
-# plt.figure()
-# plt.plot(np.abs(the_ans[0:2056]))
+plt.plot(np.log(np.abs(answer[0:2050])), 'b')
+plt.hold(True)
+plt.plot(np.log(np.abs(result[0][0:])), 'r--')
+plt.show()

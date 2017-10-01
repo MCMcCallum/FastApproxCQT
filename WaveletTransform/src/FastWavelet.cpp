@@ -29,7 +29,7 @@ FastWavelet::FastWavelet( float overlap, const std::vector<float>& window ) :
 
 FastWavelet::~FastWavelet() = default;
 
-float FastWavelet::PushSamples( const std::vector<float>& audio )
+std::vector< std::array< std::complex< float >, FastWavelet::mOutputSize > >& FastWavelet::PushSamples( const std::vector<float>& audio )
 ///
 /// Push samples to be analysed. Currently dummy function just for testing
 /// python bindings.
@@ -40,21 +40,11 @@ float FastWavelet::PushSamples( const std::vector<float>& audio )
     // Circular buffer, window, and STFT
     auto& stft_output = mSTFT->PushSamples( audio );
     
-    std::cout << "\nOutput is " << stft_output.size() << " frames.\n";
-    std::cout << "First frame is " << stft_output[0].size() << " elements.\n";
-    for( auto& element : stft_output[0] )
-    {
-        std::cout << element.real() << " + " << element.imag() << "j,\n";
-    }
-    
-    // Take magnitude
-    spectral_magnitude( stft_output[0].data(), mOutputBuffer.data(), FastWavelet::FAST_WAVELET_FFT_SIZE );
-    
-    return mOutputBuffer[0];
+    return stft_output;
     
 
     
-    // Smearing
+    // CQT
     
     // Additional stuff
     
@@ -67,4 +57,15 @@ float FastWavelet::PushSamples( const std::vector<float>& audio )
     // IFFT
     
     // Synthesise
+}
+
+std::vector< float > FastWavelet::GetWindow()
+///
+/// Returns the windowing function used for STFT analysis in the time domain.
+///
+/// @return
+///  The window as a vector of float values.
+///
+{
+    return mSTFT->GetWindow();
 }
