@@ -13,7 +13,7 @@
 namespace cupcake
 {
     
-template< size_t FFT_SIZE > class STFT;
+template< size_t FFT_SIZE > class STFTAnalysis;
 
 class FastWavelet
 ///
@@ -23,9 +23,7 @@ class FastWavelet
     static const size_t FAST_WAVELET_FFT_SIZE = 4096;
 
 public:
-    FastWavelet( size_t win_len,
-                 size_t hop,
-                 const std::vector<float>& window );
+    FastWavelet( float overlap, const std::vector<float>& window );
 	~FastWavelet();
 
     float PushSamples( const std::vector<float>& audio );
@@ -35,7 +33,7 @@ private:
     // Parameters
     
     // Mechanics
-//    std::unique_ptr<STFT<FAST_WAVELET_FFT_SIZE>> mSTFT;
+    std::unique_ptr<STFTAnalysis<FAST_WAVELET_FFT_SIZE>> mSTFT;
     
     // Data
     std::vector<float> mOutputBuffer;

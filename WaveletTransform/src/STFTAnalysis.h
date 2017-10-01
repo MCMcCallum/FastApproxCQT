@@ -25,21 +25,21 @@
 namespace cupcake
 {
 
-template< uint64_t FFTSize >
+template< size_t FFTSize >
 class STFTAnalysis
 {
     
 public:
 
-	STFTAnalysis( float overlap, const std::vector< double >& window );
+	STFTAnalysis( float overlap, const std::vector< float >& window );
 	~STFTAnalysis();
     
     static constexpr size_t GetOutputSize() { return get_output_FFT_size( FFTSize ); };
 
-	std::vector< std::array< std::complex< double >, GetOutputSize() > >& PushSamples( const std::vector< double >& samples );
+	std::vector< std::array< std::complex< float >, GetOutputSize() > >& PushSamples( const std::vector< float >& samples );
     
     const size_t GetIncrement() const;
-    const std::vector< double >& GetWindow() const;
+    const std::vector< float >& GetWindow() const;
     const size_t GetWinLen() const;
     
 
@@ -48,17 +48,17 @@ private:
 	//
 	// Configuration
 	//
-    const double mOverlap;
+    const float mOverlap;
 	const size_t mIncrement;
-	const std::vector< double > mWindow;
+	const std::vector< float > mWindow;
 	const size_t mWinLen;
 
 	//
 	// Data
 	//
-	AudioBuffer< double > mInputBuffer;
-	std::vector< std::array< std::complex< double >, GetOutputSize() > > mOutputBuffer;
-    std::vector< double > mWorkingBuffer;
+	AudioBuffer< float > mInputBuffer;
+	std::vector< std::array< std::complex< float >, GetOutputSize() > > mOutputBuffer;
+    std::vector< float > mWorkingBuffer;
     
     //
     // Mechanics
@@ -72,33 +72,33 @@ private:
 
 };
 
-template< uint64_t FFTSize >
-STFTAnalysis< FFTSize >::STFTAnalysis( float overlap, const std::vector< double >& window ) :
+template< size_t FFTSize >
+STFTAnalysis< FFTSize >::STFTAnalysis( float overlap, const std::vector< float >& window ) :
 	mOverlap( overlap ),
 	mIncrement( static_cast< size_t >( ( 1-overlap )*window.size() ) ),
 	mWindow( window ),
 	mWinLen( window.size() ),
 	mInputBuffer( INPUT_BUFFER_SIZE ),
-	mOutputBuffer( ( INPUT_BUFFER_SIZE-mWinLen )/mIncrement + 1, std::array< std::complex< double >, GetOutputSize() >() ),
+	mOutputBuffer( ( INPUT_BUFFER_SIZE-mWinLen )/mIncrement + 1, std::array< std::complex< float >, GetOutputSize() >() ),
     mWorkingBuffer( FFTSize, 0.0 ),
     mFFTConfig()
 ///
 /// Constructor.
 ///
 /// @param overlap
-///  A double value specifying the fraction of window length that is overlapped
+///  A float value specifying the fraction of window length that is overlapped
 ///  between windows. The if this results in a fraction of a sample, the overlapping
 ///  number of samples is truncated to an integer.
 ///
 /// @param window
-///  A vector of double values describing the windowing function (and hence windowing
+///  A vector of float values describing the windowing function (and hence windowing
 ///  length) for the STFT operation.
 ///
 {
     make_FFT( FFTSize, mFFTConfig );
 }
 
-template< uint64_t FFTSize >
+template< size_t FFTSize >
 STFTAnalysis< FFTSize >::~STFTAnalysis()
 ///
 /// Destructor.
@@ -107,8 +107,8 @@ STFTAnalysis< FFTSize >::~STFTAnalysis()
     destroy_FFT( mFFTConfig );
 }
 
-template< uint64_t FFTSize >
-std::vector< std::array< std::complex< double >, STFTAnalysis< FFTSize >::GetOutputSize() > >& STFTAnalysis< FFTSize >::PushSamples( const std::vector< double >& samples )
+template< size_t FFTSize >
+std::vector< std::array< std::complex< float >, STFTAnalysis< FFTSize >::GetOutputSize() > >& STFTAnalysis< FFTSize >::PushSamples( const std::vector< float >& samples )
 ///
 /// Adds samples to previous left over samples at input buffer
 /// and performs all the FFT operations it has enough samples
@@ -143,7 +143,7 @@ std::vector< std::array< std::complex< double >, STFTAnalysis< FFTSize >::GetOut
         vec_mult( samples.data() + input_pointer, mWindow.data(), mWorkingBuffer.data(), mWinLen );
 
 		// Perform FFT
-        std::array< std::complex< double >, GetOutputSize() >& output_vector = mOutputBuffer[output_frame_idx];
+        std::array< std::complex< float >, GetOutputSize() >& output_vector = mOutputBuffer[output_frame_idx];
         FFT_not_in_place( mWorkingBuffer.data(), output_vector.data(), mFFTConfig );
         
 		// Increment indices for next frame
@@ -162,7 +162,7 @@ std::vector< std::array< std::complex< double >, STFTAnalysis< FFTSize >::GetOut
 
 }
     
-template< uint64_t FFTSize >
+template< size_t FFTSize >
 const size_t STFTAnalysis< FFTSize >::GetIncrement() const
 ///
 /// Get the number of samples incremented between each analysis window.
@@ -174,8 +174,8 @@ const size_t STFTAnalysis< FFTSize >::GetIncrement() const
     return mIncrement;
 }
     
-template< uint64_t FFTSize >
-const std::vector< double >& STFTAnalysis< FFTSize >::GetWindow() const
+template< size_t FFTSize >
+const std::vector< float >& STFTAnalysis< FFTSize >::GetWindow() const
 ///
 /// Get the windowing function applied to the input signal before each FFT operation
 /// in the STFT analysis procedure
@@ -187,7 +187,7 @@ const std::vector< double >& STFTAnalysis< FFTSize >::GetWindow() const
     return mWindow;
 }
 
-template< uint64_t FFTSize >
+template< size_t FFTSize >
 const size_t STFTAnalysis< FFTSize >::GetWinLen() const
 ///
 /// Get the length of the STFT analysis window.

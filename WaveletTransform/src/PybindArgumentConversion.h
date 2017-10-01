@@ -8,6 +8,7 @@
 
 #include "pybind/pybind11.h"
 #include "pybind/numpy.h"
+#include <iostream>
 
 
 
@@ -18,31 +19,29 @@ namespace py = pybind11;
 namespace cupcake
 {
 
-// Specify conversion mapping from python arguments to C++ arguments to functions.
-// - This is distinct from the argument conversion types, because sometimes we want
-//   references, rather than values.
+    
+    
+//
+// Type mapping
+//
+    
+//
+// Specify conversion mapping from python arguments/return values to C++ arguments/return values for functions.
+//
+// The usual default case.
 template< typename T >
 struct cpp_argument_type{ typedef T type; };
+// Map std::vector<float> to py::array_t<float>, and its references.
 template<>
-struct cpp_argument_type<py::array_t<float>>{ typedef const std::vector<float>& type; };
-
-
-
-// Specify conversion between python types and c++ types. Each of these will require a custom
-// conversion function.
-// - A specialised type for the py::array_t type
-template< typename T >
-struct argument_conversion_return{ typedef T type; };
-template<>
-struct argument_conversion_return<py::array_t<float>>{ typedef std::vector<float> type; };
-    
-    
+struct cpp_argument_type<py::array_t<float, 16>>{ typedef const std::vector<float>& type; };
 
 //
 // Specify mapping from C++ arguments to Python arguments for return values.
 //
+// The usual default case.
 template< typename T >
 struct python_return_type{ typedef T type; };
+// Map std::vector<float> to py::array_t<float>.
 template<>
 struct python_return_type<std::vector<float>>{ typedef py::array_t<float> type; };
 
@@ -51,8 +50,9 @@ struct python_return_type<std::vector<float>>{ typedef py::array_t<float> type; 
 //
 // The argument conversion functions
 //
+    
 template< typename arg >
-typename argument_conversion_return<arg>::type convert_to_vector( arg& x )
+typename std::remove_reference<typename cpp_argument_type<arg>::type>::type convert_arg( arg&& x )
 ///
 /// Simply copies arguments to return value. This will in effect copy the argument
 /// passed in, so there is some room for improvement in terms of efficiency here.
@@ -64,11 +64,14 @@ typename argument_conversion_return<arg>::type convert_to_vector( arg& x )
 ///  The same argument to be copied as a return value.
 ///
 {
-    return x;
+    // @note [matt.mccallum 09.30.17] The following uses at most a move constructor, which is fine.
+    //                                There is a risk of stealing xvalues due to the perfect forwarding
+    //                                of an xvalue here, but that's not an issue in this wrapper.
+    return std::forward<arg>( x );
 }
 
-template< >
-std::vector<float> convert_to_vector<py::array_t<float>>( py::array_t<float>& x )
+template<>
+const std::vector<float> convert_arg<py::array_t<float>>( py::array_t<float>&& x )
 ///
 /// Converts a python array type to a C++ vector. At the moment this is only implemented
 /// for 1D arrays.
@@ -80,7 +83,6 @@ std::vector<float> convert_to_vector<py::array_t<float>>( py::array_t<float>& x 
 ///  A vector containing the contents of the python array.
 ///
 {
-    
     py::buffer_info info_x = x.request();
     
     if (info_x.ndim != 1)
@@ -88,7 +90,10 @@ std::vector<float> convert_to_vector<py::array_t<float>>( py::array_t<float>& x 
     
     std::vector<float> ret( (float*)info_x.ptr, ( (float*)info_x.ptr ) + ( info_x.shape[0]-1 )  );
     
-    return ret; // This is going to copy the vector back to the output, not so great...
+    // @note [matt.mccallum 09.30.17] Return value optimization as specified in the C++ standard - 12.8 (32), states
+    //                                that an lvalue here is treated as an rvalue for overload resolution.
+    //                                So we really do avoid any copying on return here which is great.
+    return ret;
     
 }
     
@@ -97,8 +102,9 @@ std::vector<float> convert_to_vector<py::array_t<float>>( py::array_t<float>& x 
 //
 // The return type conversion functions
 //
+    
 template< typename arg >
-typename python_return_type<arg>::type convert_from_vector( arg& x )
+typename python_return_type<arg>::type convert_return( arg& x )
 ///
 /// Function for converting C++ function return values to python types. This one simply copies
 /// its arguments to return value. This will in effect copy the argument passed in, so there
@@ -111,11 +117,12 @@ typename python_return_type<arg>::type convert_from_vector( arg& x )
 ///  The same argument to be copied as a return value.
 ///
 {
+    std::cout << "convert return...\n";
     return x;
 }
 
 template<>
-py::array_t<float> convert_from_vector<std::vector<float>>( std::vector<float>& x )
+py::array_t<float> convert_return<std::vector<float>>( std::vector<float>& x )
 ///
 /// Converts a vector (likely returned from a C++ function) to a python array, that may be used
 /// back in python.
@@ -127,42 +134,17 @@ py::array_t<float> convert_from_vector<std::vector<float>>( std::vector<float>& 
 ///  An array python can understand.
 ///
 {
+    std::cout << "convert return v...\n";
     py::array_t<float> ret( x.size(), x.data() );
     return ret; // This is going to copy the vector back to the output, not so great...
 }
-
-    
-    
-//
-// Return a function with the captured object and internal function as arguments...
-// The object instance is passed by the pybind library as first argument...
-//
-template< typename obj, typename ret, typename... args >
-auto py_wrapped_cpp_func(  obj* o, ret (obj::*f)( typename cpp_argument_type<args>::type... ), args... a )
-///
-/// A function that simple calls a class method on an instance, converting all arguments from python
-/// types to C++ types.
-///
-/// @param o
-///  Pointer to the class instance for method to be called on.
-///
-/// @param f
-///  Reference to class method to be called.
-///
-/// @param a
-///  Arguments of the method f as python types.
-///
-/// @return
-///  The returned value of the class method.
-///
-{
-    ret x = (o->*f)( convert_to_vector(a)... );
-    typename python_return_type<ret>::type y = convert_from_vector( x );
-    return y;
-}
     
     
 
+//
+// Function converters
+//
+    
 template< typename obj, typename... args >
 void py_wrapped_ctor( obj& instance, args... a )
 ///
@@ -179,13 +161,11 @@ void py_wrapped_ctor( obj& instance, args... a )
 ///  The arguments passed into the new object upon construction.
 ///
 {
-    new (&instance) obj( convert_to_vector(a)... );
+    new (&instance) obj( convert_arg( std::forward<args>( a ) )... );
 }
 
-    
-
 template< typename obj, typename ret, typename... args >
-auto make_wrapped_vec_fun( ret (obj::*f)( typename cpp_argument_type<args>::type... ) )
+auto py_wrapped_func( ret (obj::*f)( typename cpp_argument_type<args>::type... ) )
 ///
 /// A factory function for creating function pointers that wrap up class methods and automatically
 /// convert all function arguments before calling the C++ function.
@@ -199,9 +179,13 @@ auto make_wrapped_vec_fun( ret (obj::*f)( typename cpp_argument_type<args>::type
 {
     return [f]( obj* o, args... a )
     {
-        return py_wrapped_cpp_func( o, f, a...);
+        ret x = (o->*f)( convert_arg( std::forward<args>( a ) )... );
+        typename python_return_type<ret>::type y = convert_return( x );
+        return y;
     };
 }
 
+    
+    
 } // namespace cupcake
 

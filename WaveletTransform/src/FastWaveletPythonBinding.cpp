@@ -22,8 +22,8 @@ PYBIND11_PLUGIN(FastWavelet) {
     py::module m("FastWavelet", "C++ implementation of the fast wavelet transform");
     
     py::class_<cupcake::FastWavelet>(m, "FastWavelet")
-        .def("__init__", &cupcake::py_wrapped_ctor< FastWavelet, size_t, size_t, py::array_t<float>> )
-        .def("PushSamples", make_wrapped_vec_fun< FastWavelet, float, py::array_t<float>>(&FastWavelet::PushSamples));
+        .def( "__init__", &py_wrapped_ctor< FastWavelet, float, py::array_t<float> > )
+        .def( "PushSamples", py_wrapped_func< FastWavelet, float, py::array_t<float> >( &FastWavelet::PushSamples ) );
 
     return m.ptr();
 };
