@@ -29,12 +29,11 @@ namespace cupcake
 //
 // Specify conversion mapping from python arguments to C++ arguments for functions.
 //
-// The usual default case.
 template< typename T >
-struct cpp_argument_type{ typedef T type; };
+struct python_argument_type{ typedef T type; };
 // Map std::vector<float> to py::array_t<float>, and its references.
 template<>
-struct cpp_argument_type<py::array_t<float, 16>>{ typedef const std::vector<float>& type; };
+struct python_argument_type<const std::vector<float>&>{ typedef py::array_t<float, 16> type; };
 
 
     
@@ -43,7 +42,7 @@ struct cpp_argument_type<py::array_t<float, 16>>{ typedef const std::vector<floa
 //
     
 template< typename arg >
-typename std::remove_reference<typename cpp_argument_type<arg>::type>::type convert_arg( arg&& x )
+typename std::remove_reference<arg>::type convert_arg( typename python_argument_type<arg>::type&& x )
 ///
 /// Simply copies arguments to return value. This will in effect copy the argument
 /// passed in, so there is some room for improvement in terms of efficiency here.
@@ -62,7 +61,7 @@ typename std::remove_reference<typename cpp_argument_type<arg>::type>::type conv
 }
 
 template<>
-const std::vector<float> convert_arg<py::array_t<float>>( py::array_t<float>&& x )
+const std::vector<float> convert_arg<const std::vector<float>&>( typename python_argument_type<const std::vector<float>&>::type&& x )
 ///
 /// Converts a python array type to a C++ vector. At the moment this is only implemented
 /// for 1D arrays.
@@ -160,13 +159,16 @@ py::array_t<std::complex<float>> convert_return( std::vector<std::array<std::com
 //
     
 template< typename obj, typename... args >
-void py_wrapped_ctor( obj& instance, args... a )
+void py_wrapped_ctor( obj& instance, typename python_argument_type<args>::type... a )
 ///
 /// Creates an object to be used in pybind as a python object. This is
 /// distinct from wrapped C++ methods as it has to new the object, and
 /// also it takes a reference to the soon-to-be memory of the object,
 /// rather than a pointer to a pre-existing object (as with function
 /// methods).
+/// It also must choose between the many possible constructors of a class
+/// and so the `args` to the constructor should usually be provided explicitly
+/// in the template.
 ///
 /// @param instance
 ///  The soon-to-be memory location of the new object.
@@ -175,11 +177,11 @@ void py_wrapped_ctor( obj& instance, args... a )
 ///  The arguments passed into the new object upon construction.
 ///
 {
-    new (&instance) obj( convert_arg( std::forward<args>( a ) )... );
+    new (&instance) obj( convert_arg<args>( std::forward<typename python_argument_type<args>::type>( a ) )... );
 }
 
 template< typename... args, typename obj, typename ret >
-auto py_wrapped_func( ret (obj::*f)( typename cpp_argument_type<args>::type... ) )
+auto py_wrapped_func( ret (obj::*f)( args... ) )
 ///
 /// A factory function for creating function pointers that wrap up class methods and automatically
 /// convert all function arguments to/from python types, before and after calling the C++ function.
@@ -191,9 +193,9 @@ auto py_wrapped_func( ret (obj::*f)( typename cpp_argument_type<args>::type... )
 ///  The wrapped function pointer.
 ///
 {
-    return [f]( obj* o, args... a )
+    return [f]( obj* o, typename python_argument_type<args>::type&... a )
     {
-        auto x = (o->*f)( convert_arg( std::forward<args>( a ) )... );
+        auto x = (o->*f)( convert_arg<args>( std::forward<typename python_argument_type<args>::type>( a ) )... );
         auto y = convert_return( x );
         return y;
     };
