@@ -164,7 +164,7 @@ void py_wrapped_ctor( obj& instance, args... a )
     new (&instance) obj( convert_arg( std::forward<args>( a ) )... );
 }
 
-template< typename obj, typename ret, typename... args >
+template< typename... args, typename obj, typename ret >
 auto py_wrapped_func( ret (obj::*f)( typename cpp_argument_type<args>::type... ) )
 ///
 /// A factory function for creating function pointers that wrap up class methods and automatically

@@ -23,7 +23,7 @@ PYBIND11_PLUGIN(FastWavelet) {
     
     py::class_<cupcake::FastWavelet>(m, "FastWavelet")
         .def( "__init__", &py_wrapped_ctor< FastWavelet, float, py::array_t<float> > )
-        .def( "PushSamples", py_wrapped_func< FastWavelet, float, py::array_t<float> >( &FastWavelet::PushSamples ) );
+        .def( "PushSamples", py_wrapped_func< py::array_t<float> >( &FastWavelet::PushSamples ) );
 
     return m.ptr();
 };
