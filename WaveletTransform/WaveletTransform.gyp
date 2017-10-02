@@ -17,12 +17,11 @@
         'sources': 
         [
           'src/AudioBuffer.h',
-          'src/CQT.h',
+          'src/FastCQT.h',
           'src/FastWavelet.h',
           'src/FastWavelet.cpp',
           'src/FastWaveletPythonBinding.cpp',
           'src/PybindArgumentConversion.h',
-
           'src/OverlapAddBuffer.h',
           'src/STFTAnalysis.h',
           'src/STFTSynthesis.h',
@@ -48,7 +47,7 @@
         'sources': 
         [
           'src/AudioBuffer.h',
-          'src/CQT.h',
+          'src/FastCQT.h',
           'src/FastWavelet.h',
           'src/FastWavelet.cpp',
           'src/FastWaveletPythonBinding.cpp',

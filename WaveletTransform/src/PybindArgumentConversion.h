@@ -4,23 +4,18 @@
 // Header for custom conversion between pybind argument types and C++ argument types.
 //
 
-
+// @todo [matt.mccallum 10.02.17] This wrapping of C++ argument types should probably be
+//                                sitting in its own codebase as an extension to pybind11.
 
 #include "pybind/pybind11.h"
 #include "pybind/numpy.h"
 #include "pybind/complex.h"
 #include <iostream>
 
-
-
 namespace py = pybind11;
-
-
 
 namespace cupcake
 {
-
-    
     
 //
 // Type mapping
@@ -41,6 +36,7 @@ struct python_argument_type<const std::vector<float>&>{ typedef py::array_t<floa
 // The argument conversion functions
 //
     
+// The default...
 template< typename arg >
 typename std::remove_reference<arg>::type convert_arg( typename python_argument_type<arg>::type&& x )
 ///
@@ -59,7 +55,8 @@ typename std::remove_reference<arg>::type convert_arg( typename python_argument_
     //                                of an xvalue here, but that's not an issue in this wrapper.
     return std::forward<arg>( x );
 }
-
+    
+// The python array to std::vector case.
 template<>
 const std::vector<float> convert_arg<const std::vector<float>&>( typename python_argument_type<const std::vector<float>&>::type&& x )
 ///
@@ -92,7 +89,11 @@ const std::vector<float> convert_arg<const std::vector<float>&>( typename python
 //
 // The return type conversion functions
 //
+// @todo [matt.mccallum 10.02.17] These conversion functions for one dimensional and multi-dimensional vector types
+//                                could probably be abstracted a little further. At this stage, it's all very similar
+//                                boiler plate stuff.
     
+// The default...
 template< typename arg >
 arg convert_return( arg& x )
 ///
@@ -109,7 +110,8 @@ arg convert_return( arg& x )
 {
     return x; // @todo [matt.mccallum 10.01.17] This might copy the vector back to the output, not so great...
 }
-
+    
+// The std::vector to py::array conversion.
 py::array_t<float> convert_return( std::vector<float>& x )
 ///
 /// Converts a vector (likely returned from a C++ function) to a python array, that may be used
@@ -126,6 +128,7 @@ py::array_t<float> convert_return( std::vector<float>& x )
     return ret; // This will not copy the object on return as specified in return value optimization as specified in the C++ standard - 12.8 (32)
 }
     
+// The std::vector<std::array<std::complex<float>,N>> to py::array conversion.
 template< size_t ARRAY_SIZE >
 py::array_t<std::complex<float>> convert_return( std::vector<std::array<std::complex<float>, ARRAY_SIZE>>& x )
 ///
@@ -135,14 +138,14 @@ py::array_t<std::complex<float>> convert_return( std::vector<std::array<std::com
 ///  The two dimensional C++ array to be converted into a python array.
 ///
 /// @return
-///  The python C++ object that is interpretable by pybind11 and hence Python.
+///  The resulting python C++ object that is interpretable by pybind11 and hence Python.
 ///
 {
     std::vector<size_t> shape(2, 0);
     std::vector<size_t> strides(2, 0);
     shape[0] = x.size();
     shape[1] = x[0].size();
-    strides[0] = x.size()*sizeof( std::complex<float> );
+    strides[0] = (x[0].size())*sizeof( std::complex<float> );
     strides[1] = 1*sizeof( std::complex<float> );
     
     py::array_t<std::complex<float>> ret( shape,
@@ -152,6 +155,21 @@ py::array_t<std::complex<float>> convert_return( std::vector<std::array<std::com
     return ret; // This will not copy the object on return as specified in return value optimization as specified in the C++ standard - 12.8 (32)
 }
     
+// The std::vector<std::complex<float>> to py:array conversion
+py::array_t<std::complex<float>> convert_return( std::vector<std::complex<float>>& x )
+///
+/// Converts a single dimensional complex valued C++ data block into a single dimensional Python array.
+///
+/// @param x
+///  The single dimensional C++ array to be converted.
+///
+/// @return
+///  The resulting python C++ object that is interpretable by pybind11 and hence Python.
+///
+{
+    py::array_t<std::complex<float>> ret( x.size(), x.data() );
+    return ret;
+}
     
 
 //
@@ -200,8 +218,6 @@ auto py_wrapped_func( ret (obj::*f)( args... ) )
         return y;
     };
 }
-
-    
     
 } // namespace cupcake
 

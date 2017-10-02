@@ -10,11 +10,10 @@
 
 // In module includes
 #include "AudioBuffer.h"
-#include "FFT.h"
-#include "vector_functions.h"
 
 // Thirdparty includes
-// None.
+#include "FFT.h"
+#include "vector_functions.h"
 
 // Std Lib includes
 #include <vector>
@@ -36,12 +35,16 @@ public:
     
     static constexpr size_t GetOutputSize() { return get_output_FFT_size( FFTSize ); };
 
+    // @todo [matt.mccallum 10.02.17] Having a contiguous output memory block like this is nice for vectorised
+    //                                operations, although, it would preferably be runtime configurable.
+    //                                I should spend some time creating a vector allocator so that 2D vectors
+    //                                like this can have dynamically allocated memory, allowing runtime configuration
+    //                                of the STFT size.
 	std::vector< std::array< std::complex< float >, GetOutputSize() > >& PushSamples( const std::vector< float >& samples );
     
     const size_t GetIncrement() const;
     const std::vector< float >& GetWindow() const;
     const size_t GetWinLen() const;
-    
 
 private:
 
