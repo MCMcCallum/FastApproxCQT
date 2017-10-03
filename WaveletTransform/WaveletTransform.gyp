@@ -12,6 +12,7 @@
         'include_dirs': 
         [
           './src',
+          './pybind11/include'
         ],
 
         'sources': 

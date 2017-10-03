@@ -11,9 +11,9 @@
 // None.
 
 // Third party includes.
-#include "pybind/pybind11.h"
-#include "pybind/numpy.h"
-#include "pybind/complex.h"
+#include "pybind11/pybind11.h"
+#include "pybind11/numpy.h"
+#include "pybind11/complex.h"
 
 // Std lib includes.
 // None.

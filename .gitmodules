@@ -2,3 +2,6 @@
 	path = WaveletTransform/VecLib
 	url = https://github.com/MCMcCallum/VecLib.git
 	branch = master
+[submodule "WaveletTransform/pybind11"]
+	path = WaveletTransform/pybind11
+	url = https://github.com/MCMcCallum/pybind11.git

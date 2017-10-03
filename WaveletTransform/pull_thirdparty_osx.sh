@@ -2,11 +2,10 @@
 # Created by: Matthew McCallum
 # 4th June 2017
 #
-# Pulls in dependencies for the fast CQT project
+# Pulls in dependencies for the WaveletTransform project
 #
 # Dependencies covered here:
 #   - GTest
-#   - IPP
 #   - GYP
 #
 
@@ -58,30 +57,8 @@ pushd "${ROOT_DIR}"
     popd
 
     ###################################################
-    #                      IPP                        #
+    #                      GYP                        #
     ###################################################
-
-    echo " "
-    echo "Installing IPP..."
-    echo " "
-
-    IPP_BASE_DIR="/opt/intel/ipp/"
-
-    if [ ! -e "/opt/intel/ipp/include/ipp.h" ]; then
-        echo "ERROR: Could not find IPP library."
-        echo "This must be manually downloaded and installed."
-        echo "Go here for more info: https://software.intel.com/en-us/articles/free-ipp"
-        echo " "
-    fi
-
-    if [ ! -e "${LIB_DIR}/libippsmerged.a" ]; then
-        cp "${IPP_BASE_DIR}/lib/libippcore.a" "${LIB_DIR}/libippcore.a"
-        cp "${IPP_BASE_DIR}/lib/libipps.a" "${LIB_DIR}/libipps.a"
-        cp "${IPP_BASE_DIR}/lib/libippvm.a" "${LIB_DIR}/libippsvm.a"
-
-        mkdir "${INCLUDE_DIR}/ipp/"
-        cp "${IPP_BASE_DIR}/include/"*.h "${INCLUDE_DIR}/ipp/"
-    fi
 
     echo " "
     echo "Installing GYP..."

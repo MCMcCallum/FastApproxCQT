@@ -9,8 +9,8 @@
 #include "PybindArgumentConversion.h"
 
 // Third party includes.
-#include "pybind/pybind11.h"
-#include "pybind/numpy.h"
+#include "pybind11/pybind11.h"
+#include "pybind11/numpy.h"
 
 // Std lib includes
 // None.
