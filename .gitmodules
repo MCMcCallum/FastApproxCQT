@@ -1,7 +1,7 @@
-[submodule "WaveletTransform/VecLib"]
-	path = WaveletTransform/VecLib
-	url = https://github.com/MCMcCallum/VecLib.git
-	branch = master
-[submodule "WaveletTransform/pybind11"]
-	path = WaveletTransform/pybind11
-	url = https://github.com/MCMcCallum/pybind11.git
+[submodule "VecLib"]  
+path = VecLib
+url = https://github.com/MCMcCallum/VecLib
+branch = master
+[submodule "pybind11"]
+path = pybind11
+url = https://github.com/MCMcCallum/pybind11

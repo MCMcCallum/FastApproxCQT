@@ -1,3 +1,5 @@
 *.[oa]
 *.xcodeproj
-bin/*
+/thirdparty
+/build
+/bin
