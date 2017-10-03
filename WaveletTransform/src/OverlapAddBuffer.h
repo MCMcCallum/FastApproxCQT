@@ -34,7 +34,7 @@ public:
     void PushSamples( const std::vector< T >& samples );
     void IncrementWritePosition( size_t increment);
     void PopFront( size_t numElements );
-    void Read( std::vector< double >& output );
+    void Read( std::vector< T >& output );
     
     const size_t NumSamples() const;
     const size_t SpaceRemaining() const;
@@ -162,7 +162,7 @@ void OverlapAddBuffer< T >::PopFront( size_t numElements )
         numElements = NumSamples();
     }
     
-    vec_zero( mData.data() + mReadHead, std::min( mBufferLength - mReadHead, numElements ) );
+    veclib::vec_zero( mData.data() + mReadHead, std::min( mBufferLength - mReadHead, numElements ) );
     if( numElements > ( mBufferLength - mReadHead ) )
     {
         veclib::vec_zero( mData.data(), numElements - ( mBufferLength - mReadHead ) );
@@ -172,7 +172,7 @@ void OverlapAddBuffer< T >::PopFront( size_t numElements )
 }
     
 template< typename T >
-void OverlapAddBuffer< T >::Read( std::vector< double >& output )
+void OverlapAddBuffer< T >::Read( std::vector< T >& output )
 ///
 /// Copy a number of samples from the buffer into the provided output vector.
 /// These samples are not removed from the buffer, they are simply copied to the

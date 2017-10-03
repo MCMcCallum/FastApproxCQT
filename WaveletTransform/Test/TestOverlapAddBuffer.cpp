@@ -7,9 +7,9 @@
 
 // In module includes
 #include "OverlapAddBuffer.h"
-#include "sig_gen.h"
 
 // Thirdparty includes
+#include "sig_gen.h"
 #include "gtest/gtest.h"
 
 // Std Lib includes
@@ -34,16 +34,16 @@ protected:
     /// Before all the tests, create an arbitrary input to fill the buffer with.
     ///
     {
-        seed_rand();
+        veclib::seed_rand();
         input_noise.resize( MAX_INPUT_SIZE );
-        std::generate( input_noise.begin(), input_noise.end(), std::bind( &make_random_number, -1.0, 1.0 ) );
+        std::generate( input_noise.begin(), input_noise.end(), std::bind( &veclib::make_random_number, -1.0, 1.0 ) );
         
         input_dc.resize( 0 );
-        input_dc.resize( MAX_INPUT_SIZE, make_random_number( -1.0, 1.0 ) );
+        input_dc.resize( MAX_INPUT_SIZE, veclib::make_random_number( -1.0, 1.0 ) );
     }
     
-    std::vector< double > input_noise; // Vectors for storing the input for all tests.
-    std::vector< double > input_dc;
+    std::vector< float > input_noise; // Vectors for storing the input for all tests.
+    std::vector< float > input_dc;
     
 };
 
@@ -58,15 +58,15 @@ TEST_F( OverlapAddBufferTest, test_write_read )
     const size_t BUFFER_SIZE = 933;                                 // -> The size of the buffer we are processing samples through.
     const size_t NUM_CHUNKS_INPUT = BUFFER_SIZE/INPUT_CHUNK_SIZE*10;// -> The number of times to run this test - pushing chunks into the buffer and reading.
     
-    OverlapAddBuffer< double > buffer( BUFFER_SIZE );
+    OverlapAddBuffer< float > buffer( BUFFER_SIZE );
     
     size_t input_pos = 0;
     for( int chunk=0; chunk<NUM_CHUNKS_INPUT; ++chunk )
     {
-        const std::vector< double > input( input_noise.begin() + input_pos, input_noise.begin() + input_pos + INPUT_CHUNK_SIZE );
-        std::vector< double > output1( INPUT_CHUNK_SIZE );
-        std::vector< double > output2( INPUT_CHUNK_SIZE );
-        std::vector< double > output3( INPUT_CHUNK_SIZE );
+        const std::vector< float > input( input_noise.begin() + input_pos, input_noise.begin() + input_pos + INPUT_CHUNK_SIZE );
+        std::vector< float > output1( INPUT_CHUNK_SIZE );
+        std::vector< float > output2( INPUT_CHUNK_SIZE );
+        std::vector< float > output3( INPUT_CHUNK_SIZE );
         
         buffer.PushSamples( input );
         buffer.IncrementWritePosition( INPUT_CHUNK_SIZE );
@@ -102,20 +102,20 @@ TEST_F( OverlapAddBufferTest, test_write_with_overlap )
     const size_t BUFFER_SIZE = 933;                                 // -> The number of samples in the buffer itself
     const size_t NUM_CHUNKS_INPUT = BUFFER_SIZE/INCREMENT_SIZE*10;  // -> The number of chunks input into the buffer for this test
     
-    OverlapAddBuffer< double > buffer( BUFFER_SIZE );
+    OverlapAddBuffer< float > buffer( BUFFER_SIZE );
     
     size_t input_pos = 0;
     for( size_t chunk=0; chunk<NUM_CHUNKS_INPUT; ++chunk )
     {
-        const std::vector< double > input( input_dc.begin() + input_pos, input_dc.begin() + input_pos + INPUT_CHUNK_SIZE );
-        std::vector< double > output( INCREMENT_SIZE );
+        const std::vector< float > input( input_dc.begin() + input_pos, input_dc.begin() + input_pos + INPUT_CHUNK_SIZE );
+        std::vector< float > output( INCREMENT_SIZE );
         
         buffer.PushSamples( input );
         buffer.IncrementWritePosition( INCREMENT_SIZE );
         
         buffer.Read( output );
         
-        double expected_level = std::min( chunk + 1, NUM_OVERLAPPING )*input_dc[0];
+        float expected_level = std::min( chunk + 1, NUM_OVERLAPPING )*input_dc[0];
         for( int samp_ind=0; samp_ind<INCREMENT_SIZE; ++samp_ind )
         {
             EXPECT_EQ( output[samp_ind], expected_level );
@@ -140,7 +140,7 @@ TEST_F( OverlapAddBufferTest, test_space_remaining )
     const size_t NUM_CYCLES = 10;               // -> The number of times we fill/clear the buffer then write additional samples
     const size_t PUSH_CHUNK_SIZE = 110;         // -> The maximum size of the chunks pushed into the buffer when filling it up
     
-    OverlapAddBuffer< double > buffer( BUFFER_SIZE );
+    OverlapAddBuffer< float > buffer( BUFFER_SIZE );
     
     for( int cycle=0; cycle<NUM_CYCLES; ++cycle )
     {
@@ -151,7 +151,7 @@ TEST_F( OverlapAddBufferTest, test_space_remaining )
             
             size_t input_size = std::min( PUSH_CHUNK_SIZE, buffer.SpaceRemaining() );
             
-            const std::vector< double > input( input_dc.begin(), input_dc.begin() + input_size );
+            const std::vector< float > input( input_dc.begin(), input_dc.begin() + input_size );
             
             buffer.PushSamples( input );
             buffer.IncrementWritePosition( input_size );
@@ -165,7 +165,7 @@ TEST_F( OverlapAddBufferTest, test_space_remaining )
         
         EXPECT_EQ( buffer.SpaceRemaining(), BUFFER_SIZE );
         
-        const std::vector< double > input( input_dc.begin(), input_dc.begin() + EXTRA_SAMPLE_PUSH_SIZE );
+        const std::vector< float > input( input_dc.begin(), input_dc.begin() + EXTRA_SAMPLE_PUSH_SIZE );
         
         for( int extra_push=0; extra_push<NUM_EXTRA_PUSHES; ++extra_push )
         {
@@ -194,14 +194,14 @@ TEST_F( OverlapAddBufferTest, test_num_samples )
     const size_t BUFFER_SIZE = 933;                                                     // -> The size of the buffer itself
     const size_t NUM_READ_CYCLES = BUFFER_SIZE/( PUSH_CHUNK_SIZE*PUSHES_PER_CYCLE )*10; // -> The number of times to cycle through writing/popping samples to/from the buffer.
     
-    OverlapAddBuffer< double > buffer( BUFFER_SIZE );
+    OverlapAddBuffer< float > buffer( BUFFER_SIZE );
     
     for( int cycle=0; cycle<NUM_READ_CYCLES; ++cycle )
     {
         
         for( int push=0; push<PUSHES_PER_CYCLE; push++ )
         {
-            const std::vector< double > input( input_dc.begin(), input_dc.begin() + PUSH_CHUNK_SIZE );
+            const std::vector< float > input( input_dc.begin(), input_dc.begin() + PUSH_CHUNK_SIZE );
             
             buffer.PushSamples( input );
             buffer.IncrementWritePosition( input.size() );

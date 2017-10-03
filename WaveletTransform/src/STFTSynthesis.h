@@ -30,17 +30,17 @@ class STFTSynthesis
 
 public:
     
-    STFTSynthesis( size_t sample_increment, const std::vector< double >& window );
-    STFTSynthesis( double overlap, const std::vector< double >& window );
+    STFTSynthesis( size_t sample_increment, const std::vector< float >& window );
+    STFTSynthesis( float overlap, const std::vector< float >& window );
     STFTSynthesis( const STFTAnalysis< FFTSize >& analysis );
     ~STFTSynthesis();
     
     static constexpr size_t GetInputSize() { return veclib::get_output_FFT_size( FFTSize ); };
     
-    const std::vector< double >& PushFrames( const std::vector< std::array< std::complex< double >, GetInputSize() > >& STFTFrames );
+    const std::vector< float >& PushFrames( const std::vector< std::array< std::complex< float >, GetInputSize() > >& STFTFrames );
     
     const size_t GetIncrement() const;
-    const std::vector< double >& GetWindow() const;
+    const std::vector< float >& GetWindow() const;
     const size_t GetWinLen() const;
     
 private:
@@ -49,21 +49,21 @@ private:
     // Configuration
     //
     const size_t mIncrement;
-    const std::vector< double > mWindow;
+    const std::vector< float > mWindow;
     const size_t mWinLen;
     
     //
     // Data
     //
-    std::vector< double > mTempBuffer;
-    OverlapAddBuffer< double > mOverlapAddBuffer;
-    std::vector< double > mOutputBuffer;
+    std::vector< float > mTempBuffer;
+    OverlapAddBuffer< float > mOverlapAddBuffer;
+    std::vector< float > mOutputBuffer;
     
     //
     // Mechanics
     //
     veclib::FFTConfig mFFTConfig;
-    double mNormalisationMult;
+    float mNormalisationMult;
     
     //
     // Constants
@@ -73,13 +73,13 @@ private:
     //
     // Helpers
     //
-    static double ComputeNormalizationMultiplier( size_t sample_increment, const std::vector< double >& window );
+    static float ComputeNormalizationMultiplier( size_t sample_increment, const std::vector< float >& window );
     void CheckParameters();
     
 };
 
 template< uint64_t FFTSize >
-STFTSynthesis< FFTSize >::STFTSynthesis( size_t sample_increment, const std::vector< double >& window ) :
+STFTSynthesis< FFTSize >::STFTSynthesis( size_t sample_increment, const std::vector< float >& window ) :
     mIncrement( sample_increment ),
     mWindow( window ),
     mWinLen( window.size() ),
@@ -104,7 +104,7 @@ STFTSynthesis< FFTSize >::STFTSynthesis( size_t sample_increment, const std::vec
 }
     
 template< uint64_t FFTSize >
-STFTSynthesis< FFTSize >::STFTSynthesis( double overlap, const std::vector< double >& window ) :
+STFTSynthesis< FFTSize >::STFTSynthesis( float overlap, const std::vector< float >& window ) :
     mIncrement( static_cast< size_t >( ( 1-overlap )*window.size() ) ),
     mWindow( window ),
     mWinLen( window.size() ),
@@ -162,7 +162,7 @@ STFTSynthesis< FFTSize >::~STFTSynthesis()
 }
     
 template< uint64_t FFTSize >
-const std::vector< double >& STFTSynthesis< FFTSize >::PushFrames( const std::vector< std::array< std::complex< double >, GetInputSize() > >& STFTFrames )
+const std::vector< float >& STFTSynthesis< FFTSize >::PushFrames( const std::vector< std::array< std::complex< float >, GetInputSize() > >& STFTFrames )
 ///
 /// Push frames into the STFT synthesis object and synthesise the corresponding signal
 /// in the frequency domain using the overlap-add method. Currently this employs no
@@ -220,7 +220,7 @@ const size_t STFTSynthesis< FFTSize >::GetIncrement() const
 }
 
 template< uint64_t FFTSize >
-const std::vector< double >& STFTSynthesis< FFTSize >::GetWindow() const
+const std::vector< float >& STFTSynthesis< FFTSize >::GetWindow() const
 ///
 /// Get the windowing function based on which this STFT synthesis object truncates (accoridng to
 /// its length) and scales (according to the function) the output of the IFFT operation.
@@ -247,7 +247,7 @@ const size_t STFTSynthesis< FFTSize >::GetWinLen() const
 }
     
 template< uint64_t FFTSize >
-double STFTSynthesis< FFTSize >::ComputeNormalizationMultiplier( size_t sample_increment, const std::vector< double >& window )
+float STFTSynthesis< FFTSize >::ComputeNormalizationMultiplier( size_t sample_increment, const std::vector< float >& window )
 ///
 /// Compute the multiplier by which the output of the overlap-add operation must be scaled for
 /// perfect reconstruction in the STFT framework this object is a part of.
@@ -259,7 +259,7 @@ double STFTSynthesis< FFTSize >::ComputeNormalizationMultiplier( size_t sample_i
 ///  The window used in the STFT analysis operation for the STFT framework this object is a part of.
 ///
 {
-    double amplitude = 0.0;
+    float amplitude = 0.0;
     for( size_t sample_num=0; sample_num<window.size(); sample_num+=sample_increment )
     {
         amplitude += window[sample_num];

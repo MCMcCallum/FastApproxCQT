@@ -7,9 +7,9 @@
 
 // In module includes
 #include "AudioBuffer.h"
-#include "sig_gen.h"
 
 // Thirdparty includes
+#include "sig_gen.h"
 #include "gtest/gtest.h"
 
 // Std Lib includes
@@ -36,9 +36,9 @@ protected:
     /// Before all the tests, create an arbitrary input to fill the buffer with.
     ///
     {
-        seed_rand();
+        veclib::seed_rand();
         input.resize( MAX_INPUT_SIZE );
-        std::generate( input.begin(), input.end(), std::bind( &make_random_number, -1.0, 1.0 ) );
+        std::generate( input.begin(), input.end(), std::bind( &veclib::make_random_number, -1.0, 1.0 ) );
     }
     
     std::vector< double > input; // Vector for storing the input for all tests.

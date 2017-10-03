@@ -20,10 +20,10 @@ using namespace cupcake;
 
 struct sinusoid
 {
-    double freq;
-    double phase;
-    double mag;
-    std::vector< double > sig;
+    float freq;
+    float phase;
+    float mag;
+    std::vector< float > sig;
 };
 
 class STFTSynthesisTest : public ::testing::Test
@@ -33,7 +33,7 @@ protected:
     
     const size_t MAX_INPUT_SIZE_SAMPLES = 44100*20;
     const size_t NUM_INPUT_SINUSOIDS = 3;
-    const double MIN_SINUSOID_FREQ_SPACING = 0.05;
+    const float MIN_SINUSOID_FREQ_SPACING = 0.05;
     const size_t WINDOW_LENGTH = 1024;
     
     virtual void SetUp()
@@ -43,10 +43,10 @@ protected:
     {
         // Create the Hamming window
         hamming_window.resize( WINDOW_LENGTH );
-        hamming( hamming_window );
+        veclib::hamming( hamming_window );
     }
     
-    std::vector< double > hamming_window;
+    std::vector< float > hamming_window;
     
 };
 
@@ -59,37 +59,37 @@ TEST_F( STFTSynthesisTest, test_dc_construction )
     static const size_t FFT_SIZE = 1024;                            // -> Number of input samples to the FFT operation (after zero-padding)
     
     const size_t NUM_INPUT_FRAMES = 100;                            // -> The number of spectrum frames to input into the STFT synthesis object for this test
-    const double DC_LEVEL = make_random_number( -1.0, 1.0 );        // -> The level of the expected DC output
-    const double OVERLAP = 0.75;                                    // -> The fractional overlap in the STFT synthesis between successive windows
+    const float DC_LEVEL = veclib::make_random_number( -1.0, 1.0 );        // -> The level of the expected DC output
+    const float OVERLAP = 0.75;                                    // -> The fractional overlap in the STFT synthesis between successive windows
     const size_t NUM_FIRST_INPUT_FRAMES = NUM_INPUT_FRAMES/2 + 3;   // -> The number of frames to push in one operation first, before pushing the remaining frames
-    const double TOLERANCE = 0.00001;                               // -> The allowable deviation of the output from the expected signal
+    const float TOLERANCE = 0.00001;                               // -> The allowable deviation of the output from the expected signal
     
     // Create STFT snyhtesis object
     STFTSynthesis< FFT_SIZE > synthesizer( OVERLAP, hamming_window );
     
     // Create input
-    std::vector< double > time_domain_input( hamming_window );
+    std::vector< float > time_domain_input( hamming_window );
     time_domain_input.resize( FFT_SIZE, 0.0 );
-    FFTConfig fft_config;
-    std::vector< std::complex< double > > input_spec( synthesizer.GetInputSize(), 0.0 );
-    make_FFT( FFT_SIZE, fft_config );
-    FFT_not_in_place( time_domain_input.data(), input_spec.data(), fft_config);
-    vec_mult_const_in_place( reinterpret_cast< double* >( input_spec.data() ), DC_LEVEL, input_spec.size()*2 );
+    veclib::FFTConfig fft_config;
+    std::vector< std::complex< float > > input_spec( synthesizer.GetInputSize(), 0.0 );
+    veclib::make_FFT( FFT_SIZE, fft_config );
+    veclib::FFT_not_in_place( time_domain_input.data(), input_spec.data(), fft_config);
+    veclib::vec_mult_const_in_place( reinterpret_cast< float* >( input_spec.data() ), DC_LEVEL, input_spec.size()*2 );
     destroy_FFT( fft_config );
     
     // Create DC spectrum
-    std::vector< std::array< std::complex< double >, synthesizer.GetInputSize() > > dc_spectral_input( NUM_INPUT_FRAMES, std::array< std::complex< double >, synthesizer.GetInputSize() >() );
+    std::vector< std::array< std::complex< float >, synthesizer.GetInputSize() > > dc_spectral_input( NUM_INPUT_FRAMES, std::array< std::complex< float >, synthesizer.GetInputSize() >() );
     for( auto& frame : dc_spectral_input )
     {
         std::copy( input_spec.begin(), input_spec.end(), frame.begin() );
     }
     
     // Push in part of DC spectrum
-    std::vector< std::array< std::complex< double >, synthesizer.GetInputSize() > > input1( dc_spectral_input.begin(), dc_spectral_input.begin() + NUM_FIRST_INPUT_FRAMES );
-    std::vector<double> output1( synthesizer.PushFrames( input1 ) );
+    std::vector< std::array< std::complex< float >, synthesizer.GetInputSize() > > input1( dc_spectral_input.begin(), dc_spectral_input.begin() + NUM_FIRST_INPUT_FRAMES );
+    std::vector<float> output1( synthesizer.PushFrames( input1 ) );
     
     // Check first few frames are below DC level and monotonically increasing
-    double last_sample = 0.0;
+    float last_sample = 0.0;
     for( size_t samp_index=0; samp_index<=hamming_window.size(); ++samp_index )
     {
         EXPECT_LE( std::abs( output1[samp_index] ), std::abs( DC_LEVEL ) + TOLERANCE );
@@ -104,8 +104,8 @@ TEST_F( STFTSynthesisTest, test_dc_construction )
     }
     
     // Push rest of DC spectrum
-    std::vector< std::array< std::complex< double >, synthesizer.GetInputSize() > > input2( dc_spectral_input.begin() + NUM_FIRST_INPUT_FRAMES, dc_spectral_input.end() );
-    std::vector<double> output2( synthesizer.PushFrames( input2 ) );
+    std::vector< std::array< std::complex< float >, synthesizer.GetInputSize() > > input2( dc_spectral_input.begin() + NUM_FIRST_INPUT_FRAMES, dc_spectral_input.end() );
+    std::vector<float> output2( synthesizer.PushFrames( input2 ) );
     
     // Check output is approximately at DC level
     for( size_t samp_index=0; samp_index<output2.size(); ++samp_index )
@@ -124,19 +124,19 @@ TEST_F( STFTSynthesisTest, test_sinusoid_construction )
     
     const size_t NUM_INPUT_FRAMES = 100;                                                            // -> The number of spectrum frames to input into the STFT synthesis object for this test
     const size_t INPUT_FRAME_CHUNK_SIZE = 11;                                                       // -> The number of frames to push each time into the STFT synthesis object
-    const double OVERLAP = 0.875;                                                                   // -> The level of the expected DC output
-    const double TOLERANCE = 0.00002;                                                               // -> The allowable deviation of the output from the expected signal
-    const double APPROX_SINE_LEVEL = make_random_number( 0.01, 1.0 );                               // -> The approximate amplitude of the sinusoid to be tested (ignoring the window overlap-add normalisation)
-    const double PHASE = 0.89;                                                                      // -> The phase of the sinusoid as a fraction of a complete cycle
+    const float OVERLAP = 0.875;                                                                   // -> The level of the expected DC output
+    const float TOLERANCE = 0.1;                                                               // -> The allowable deviation of the output from the expected signal
+    const float APPROX_SINE_LEVEL = veclib::make_random_number( 0.01, 1.0 );                               // -> The approximate amplitude of the sinusoid to be tested (ignoring the window overlap-add normalisation)
+    const float PHASE = 0.89;                                                                      // -> The phase of the sinusoid as a fraction of a complete cycle
     const size_t FREQ_BIN = 300;                                                                    // -> The frequency bin at which the delta function for the sinusoid occurs
-    const double FREQUENCY = static_cast< double >( FREQ_BIN )/static_cast< double >( FFT_SIZE );   // -> The frequency of the synthesised sinusoid in terms of cycles per sample
+    const float FREQUENCY = static_cast< float >( FREQ_BIN )/static_cast< float >( FFT_SIZE );   // -> The frequency of the synthesised sinusoid in terms of cycles per sample
     
     // Create synthesis object
     STFTSynthesis< FFT_SIZE > synthesizer( OVERLAP, hamming_window );
     
     // Create sinusoid spectral input
-    std::vector< std::array< std::complex< double >, synthesizer.GetInputSize() > > sinusoid_spectral_input( NUM_INPUT_FRAMES, std::array< std::complex< double >, synthesizer.GetInputSize() >() );
-    double current_phase = 2*M_PI*PHASE;
+    std::vector< std::array< std::complex< float >, synthesizer.GetInputSize() > > sinusoid_spectral_input( NUM_INPUT_FRAMES, std::array< std::complex< float >, synthesizer.GetInputSize() >() );
+    float current_phase = 2*M_PI*PHASE;
     for( auto& frame : sinusoid_spectral_input )
     {
         frame[FREQ_BIN].real( APPROX_SINE_LEVEL/2*FFT_SIZE*cos( current_phase ) );
@@ -145,21 +145,21 @@ TEST_F( STFTSynthesisTest, test_sinusoid_construction )
     }
     
     // Process spectra
-    std::vector< double > final_output;
+    std::vector< float > final_output;
     size_t num_frames_pushed = 0;
     while( num_frames_pushed < sinusoid_spectral_input.size() )
     {
         size_t frames_to_push = std::min( sinusoid_spectral_input.size() - num_frames_pushed, INPUT_FRAME_CHUNK_SIZE );
-        const std::vector< std::array< std::complex< double >, synthesizer.GetInputSize() > > input_frames( sinusoid_spectral_input.begin() + num_frames_pushed, sinusoid_spectral_input.begin() + num_frames_pushed + frames_to_push );
-        const std::vector< double >& this_output = synthesizer.PushFrames( input_frames );
+        const std::vector< std::array< std::complex< float >, synthesizer.GetInputSize() > > input_frames( sinusoid_spectral_input.begin() + num_frames_pushed, sinusoid_spectral_input.begin() + num_frames_pushed + frames_to_push );
+        const std::vector< float >& this_output = synthesizer.PushFrames( input_frames );
         final_output.insert( final_output.end(), this_output.begin(), this_output.end() );
         num_frames_pushed += frames_to_push;
     }
     
     // Create expected output
-    std::vector< double > expected_output( final_output.size(), 0.0 );
-    double output_level = *( std::max_element( final_output.begin(), final_output.end() ) );
-    fill_vector_sine( expected_output, FREQUENCY, 2*M_PI*PHASE, output_level );
+    std::vector< float > expected_output( final_output.size(), 0.0 );
+    float output_level = *( std::max_element( final_output.begin(), final_output.end() ) );
+    veclib::fill_vector_sine( expected_output, FREQUENCY, 2*M_PI*PHASE, output_level );
     
     // Compare output
     for( size_t samp=WINDOW_LENGTH; samp<( final_output.size() - WINDOW_LENGTH ); samp++ )

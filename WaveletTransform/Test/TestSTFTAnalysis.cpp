@@ -7,9 +7,9 @@
 
 // In module includes
 #include "STFTAnalysis.h"
-#include "sig_gen.h"
 
 // Thirdparty includes
+#include "sig_gen.h"
 #include "gtest/gtest.h"
 
 // Std Lib includes
@@ -22,10 +22,10 @@ using namespace cupcake;
 
 struct sinusoid
 {
-    double freq;
-    double phase;
-    double mag;
-    std::vector< double > sig;
+    float freq;
+    float phase;
+    float mag;
+    std::vector< float > sig;
 };
 
 class STFTAnalysisTest : public ::testing::Test
@@ -35,7 +35,7 @@ protected:
     
     const size_t MAX_INPUT_SIZE = 44100*20;
     const size_t NUM_INPUT_SINUSOIDS = 3;
-    const double MIN_SINUSOID_FREQ_SPACING = 0.05;
+    const float MIN_SINUSOID_FREQ_SPACING = 0.05;
     const size_t WINDOW_LENGTH = 1024;
 
     
@@ -45,9 +45,9 @@ protected:
     ///
     {
         // Create white noise input
-        seed_rand();
+        veclib::seed_rand();
         input_uniform_noise.resize( MAX_INPUT_SIZE );
-        std::generate( input_uniform_noise.begin(), input_uniform_noise.end(), std::bind( &make_random_number, -1.0, 1.0 ) );
+        std::generate( input_uniform_noise.begin(), input_uniform_noise.end(), std::bind( &veclib::make_random_number, -1.0, 1.0 ) );
         
         // Create sinusoid inputs
         for( int i=0; i<NUM_INPUT_SINUSOIDS; i++ )
@@ -57,7 +57,7 @@ protected:
             bool found_freq = false;
             while( !found_freq )
             {
-                the_sinusoid.freq = make_random_number( 0.0, 0.5 );
+                the_sinusoid.freq = veclib::make_random_number( 0.0, 0.5 );
                 found_freq = true;
                 for( auto& signal : input_sinusoids )
                 {
@@ -66,21 +66,21 @@ protected:
                 }
             }
             // Set the rest of the sinusoid parameters
-            the_sinusoid.mag = make_random_number( 0.0, 1.0 );
-            the_sinusoid.phase = make_random_number( 0.0, 2*M_PI );
+            the_sinusoid.mag = veclib::make_random_number( 0.0, 1.0 );
+            the_sinusoid.phase = veclib::make_random_number( 0.0, 2*M_PI );
             the_sinusoid.sig.resize( MAX_INPUT_SIZE );
-            fill_vector_sine( the_sinusoid.sig, the_sinusoid.freq, the_sinusoid.phase, the_sinusoid.mag );
+            veclib::fill_vector_sine( the_sinusoid.sig, the_sinusoid.freq, the_sinusoid.phase, the_sinusoid.mag );
             input_sinusoids.push_back( the_sinusoid );
         }
         
         // Create the Hamming window
         hamming_window.resize( WINDOW_LENGTH );
-        hamming( hamming_window );
+        veclib::hamming( hamming_window );
     }
     
-    std::vector< double > input_uniform_noise; // Vectors for storing the input for all tests.
+    std::vector< float > input_uniform_noise; // Vectors for storing the input for all tests.
     std::vector< sinusoid > input_sinusoids;
-    std::vector< double > hamming_window;
+    std::vector< float > hamming_window;
     
 };
 
@@ -92,29 +92,29 @@ TEST_F( STFTAnalysisTest, test_sinusoid_mag )
     // FFT parameters
     const size_t INPUT_CHUNK_SIZE = 3000;   // -> The number of samples to push to the STFT analysis object each time
     const size_t FFT_SIZE = 4096;           // -> The size of the FFT operation (in terms of input samples per frame)
-    const double FFT_OVERLAP = 0.5;         // -> The fractional overlap between successive STFT windows
+    const float FFT_OVERLAP = 0.5;         // -> The fractional overlap between successive STFT windows
     
     // Configure input
     sinusoid& current_sinusoid = input_sinusoids[0];
-    std::vector<double> input( current_sinusoid.sig.begin(), current_sinusoid.sig.begin() + INPUT_CHUNK_SIZE );
+    std::vector<float> input( current_sinusoid.sig.begin(), current_sinusoid.sig.begin() + INPUT_CHUNK_SIZE );
     
     // Calculate expected results
-    const double MAIN_LOBE_MAGNITUDE = 20*log10( std::accumulate( hamming_window.begin(), hamming_window.end(), 0.0 )*current_sinusoid.mag/2.0 ); // sum hamming * num samples / 2
-    const double MAIN_LOBE_MAGNITUDE_TOLERANCE = 1; // in dB.
-    const double MAIN_LOBE_WIDTH = 4.0/WINDOW_LENGTH; // In cycles per sample - specific to the hamming window.
-    const double MAXIMUM_RELATIVE_SIDE_LOBE_MAGNITUDE = -41; // In dB - specific to the hamming window.
+    const float MAIN_LOBE_MAGNITUDE = 20*log10( std::accumulate( hamming_window.begin(), hamming_window.end(), 0.0 )*current_sinusoid.mag/2.0 ); // sum hamming * num samples / 2
+    const float MAIN_LOBE_MAGNITUDE_TOLERANCE = 1; // in dB.
+    const float MAIN_LOBE_WIDTH = 4.0/WINDOW_LENGTH; // In cycles per sample - specific to the hamming window.
+    const float MAXIMUM_RELATIVE_SIDE_LOBE_MAGNITUDE = -41; // In dB - specific to the hamming window.
     const size_t MAIN_LOBE_BIN_INDEX = std::round( current_sinusoid.freq*FFT_SIZE );
     
     STFTAnalysis< FFT_SIZE > STFT( FFT_OVERLAP, hamming_window );
     
-    const std::vector< std::array< std::complex< double >, STFT.GetOutputSize() > >& output = STFT.PushSamples( input );
-    std::vector< std::array< double, STFT.GetOutputSize() > > mag_spectra( output.size(), std::array< double, STFT.GetOutputSize() >() );
+    const std::vector< std::array< std::complex< float >, STFT.GetOutputSize() > >& output = STFT.PushSamples( input );
+    std::vector< std::array< float, STFT.GetOutputSize() > > mag_spectra( output.size(), std::array< float, STFT.GetOutputSize() >() );
     
     // Convert to decibel magnitudes.
     for( size_t spec_index=0; spec_index<output.size(); ++spec_index )
     {
         std::transform( output[spec_index].begin(), output[spec_index].end(), mag_spectra[spec_index].begin(),
-            []( const std::complex< double >& element )
+            []( const std::complex< float >& element )
             {
                 return 20*log10( std::abs( element ) );
             }
@@ -128,7 +128,7 @@ TEST_F( STFTAnalysisTest, test_sinusoid_mag )
     }
     
     // Check the side lobes
-    const double side_lobe_threshold = MAIN_LOBE_MAGNITUDE + MAIN_LOBE_MAGNITUDE_TOLERANCE + MAXIMUM_RELATIVE_SIDE_LOBE_MAGNITUDE;
+    const float side_lobe_threshold = MAIN_LOBE_MAGNITUDE + MAIN_LOBE_MAGNITUDE_TOLERANCE + MAXIMUM_RELATIVE_SIDE_LOBE_MAGNITUDE;
     for( auto& spec : mag_spectra )
     {
         for( size_t spec_index=0; spec_index<spec.size(); ++spec_index )
@@ -152,30 +152,30 @@ TEST_F( STFTAnalysisTest, test_sinusoid_phase )
     // FFT parameters
     const size_t INPUT_CHUNK_SIZE = 3000;   // -> The number of samples to push to the STFT analysis object each time
     const size_t FFT_SIZE = 4096;           // -> The size of the FFT operation (in terms of input samples per frame)
-    const double FFT_OVERLAP = 0.75;        // -> The fractional overlap between successive STFT windows
+    const float FFT_OVERLAP = 0.75;        // -> The fractional overlap between successive STFT windows
     
     // Configure input
     sinusoid& current_sinusoid = input_sinusoids[0];
-    std::vector<double> input( current_sinusoid.sig.begin(), current_sinusoid.sig.begin() + INPUT_CHUNK_SIZE );
+    std::vector<float> input( current_sinusoid.sig.begin(), current_sinusoid.sig.begin() + INPUT_CHUNK_SIZE );
     
     // Calculate expected results
     const size_t MAIN_LOBE_BIN_INDEX = std::round( current_sinusoid.freq*FFT_SIZE );
     const size_t SAMPLES_PASSED_BETWEEN_FRAMES = static_cast< size_t >( ( 1 - FFT_OVERLAP )*WINDOW_LENGTH );
-    const double FREQ_BIN_OFFSET = current_sinusoid.freq*FFT_SIZE - MAIN_LOBE_BIN_INDEX;
-    const double PHASE_AT_FRAME_0 = current_sinusoid.phase + 2*M_PI*FREQ_BIN_OFFSET/FFT_SIZE*( WINDOW_LENGTH - 1.0 )/2.0;
-    const double PHASE_INC_BETWEEN_FRAMES = current_sinusoid.freq*2*M_PI*SAMPLES_PASSED_BETWEEN_FRAMES;
-    const double PHASE_TOLERANCE = 0.01;
+    const float FREQ_BIN_OFFSET = current_sinusoid.freq*FFT_SIZE - MAIN_LOBE_BIN_INDEX;
+    const float PHASE_AT_FRAME_0 = current_sinusoid.phase + 2*M_PI*FREQ_BIN_OFFSET/FFT_SIZE*( WINDOW_LENGTH - 1.0 )/2.0;
+    const float PHASE_INC_BETWEEN_FRAMES = current_sinusoid.freq*2*M_PI*SAMPLES_PASSED_BETWEEN_FRAMES;
+    const float PHASE_TOLERANCE = 0.01;
     
     STFTAnalysis<FFT_SIZE> STFT( FFT_OVERLAP, hamming_window );
     
-    const std::vector< std::array< std::complex< double >, STFT.GetOutputSize() > >& output = STFT.PushSamples( input );
-    std::vector< std::array< double, STFT.GetOutputSize() > > phase_spectra( output.size(), std::array< double, STFT.GetOutputSize() >() );
+    const std::vector< std::array< std::complex< float >, STFT.GetOutputSize() > >& output = STFT.PushSamples( input );
+    std::vector< std::array< float, STFT.GetOutputSize() > > phase_spectra( output.size(), std::array< float, STFT.GetOutputSize() >() );
     
     // Convert to angles.
     for( size_t spec_index=0; spec_index<output.size(); ++spec_index )
     {
         std::transform( output[spec_index].begin(), output[spec_index].end(), phase_spectra[spec_index].begin(),
-            []( const std::complex< double >& element )
+            []( const std::complex< float >& element )
             {
                 return std::arg( element );
             }
@@ -183,10 +183,10 @@ TEST_F( STFTAnalysisTest, test_sinusoid_phase )
     }
     
     // Check the phase at the peak
-    double current_phase = PHASE_AT_FRAME_0;
+    float current_phase = PHASE_AT_FRAME_0;
     for( auto& spec : phase_spectra )
     {
-        double comparison_phase = current_phase;
+        float comparison_phase = current_phase;
         if( comparison_phase > M_PI )
         {
             comparison_phase -= 2*M_PI;
