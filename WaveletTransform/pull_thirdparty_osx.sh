@@ -10,7 +10,15 @@
 #
 
 echo " "
-echo "Installing Dependencies..."
+echo "Installing Dependencies for VecLib..."
+echo " "
+
+pushd ./VecLib
+    ./pull_thirdparty_osx.sh
+popd
+
+echo " "
+echo "Installing Dependencies for FastApproxCQT..."
 echo " "
 
 ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
