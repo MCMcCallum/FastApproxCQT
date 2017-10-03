@@ -33,7 +33,7 @@ public:
 	STFTAnalysis( float overlap, const std::vector< float >& window );
 	~STFTAnalysis();
     
-    static constexpr size_t GetOutputSize() { return get_output_FFT_size( FFTSize ); };
+    static constexpr size_t GetOutputSize() { return veclib::get_output_FFT_size( FFTSize ); };
 
     // @todo [matt.mccallum 10.02.17] Having a contiguous output memory block like this is nice for vectorised
     //                                operations, although, it would preferably be runtime configurable.
@@ -66,7 +66,7 @@ private:
     //
     // Mechanics
     //
-    FFTConfig mFFTConfig;
+    veclib::FFTConfig mFFTConfig;
 
 	//
 	// Constants
@@ -98,7 +98,7 @@ STFTAnalysis< FFTSize >::STFTAnalysis( float overlap, const std::vector< float >
 ///  length) for the STFT operation.
 ///
 {
-    make_FFT( FFTSize, mFFTConfig );
+    veclib::make_FFT( FFTSize, mFFTConfig );
 }
 
 template< size_t FFTSize >
@@ -143,11 +143,11 @@ std::vector< std::array< std::complex< float >, STFTAnalysis< FFTSize >::GetOutp
 	{
         
         // Multiply by window
-        vec_mult( samples.data() + input_pointer, mWindow.data(), mWorkingBuffer.data(), mWinLen );
+        veclib::vec_mult( samples.data() + input_pointer, mWindow.data(), mWorkingBuffer.data(), mWinLen );
 
 		// Perform FFT
         std::array< std::complex< float >, GetOutputSize() >& output_vector = mOutputBuffer[output_frame_idx];
-        FFT_not_in_place( mWorkingBuffer.data(), output_vector.data(), mFFTConfig );
+        veclib::FFT_not_in_place( mWorkingBuffer.data(), output_vector.data(), mFFTConfig );
         
 		// Increment indices for next frame
 		output_frame_idx++;

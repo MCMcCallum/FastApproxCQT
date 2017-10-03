@@ -43,7 +43,7 @@ public:
     FastWavelet( float overlap, const std::vector<float>& window );
 	~FastWavelet();
     
-    static const size_t mOutputSize = get_output_FFT_size( FAST_WAVELET_FFT_SIZE );
+    static const size_t mOutputSize = veclib::get_output_FFT_size( FAST_WAVELET_FFT_SIZE );
     
     std::vector< std::array< std::complex< float >, mOutputSize > >& PushSamples( const std::vector<float>& audio );
     

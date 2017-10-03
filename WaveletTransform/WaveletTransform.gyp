@@ -2,7 +2,7 @@
     'includes': 
     [
       '../../../build/common.gypi',
-      '../../../VecLib/VecLib.gypi',
+      './VecLib/VecLib.gypi',
     ],
     'targets': 
     [
@@ -52,11 +52,9 @@
           'src/FastWavelet.cpp',
           'src/FastWaveletPythonBinding.cpp',
           'src/PybindArgumentConversion.h',
-
           'src/OverlapAddBuffer.h',
           'src/STFTAnalysis.h',
           'src/STFTSynthesis.h',
-
           'test/TestAudioBuffer.cpp',
           'test/TestOverlapAddBuffer.cpp',
           'test/TestSTFTAnalysis.cpp',

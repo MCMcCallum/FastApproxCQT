@@ -1,0 +1,4 @@
+[submodule "WaveletTransform/VecLib"]
+	path = WaveletTransform/VecLib
+	url = https://github.com/MCMcCallum/VecLib.git
+	branch = master

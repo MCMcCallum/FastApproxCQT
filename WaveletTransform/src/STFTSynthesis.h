@@ -11,11 +11,10 @@
 // In Module includes
 #include "STFTAnalysis.h"
 #include "OverlapAddBuffer.h"
-#include "FFT.h"
-#include "vector_functions.h"
 
 // Thirdparty includes
-// None.
+#include "FFT.h"
+#include "vector_functions.h"
 
 // Std Lib includes
 #include <vector>
@@ -36,7 +35,7 @@ public:
     STFTSynthesis( const STFTAnalysis< FFTSize >& analysis );
     ~STFTSynthesis();
     
-    static constexpr size_t GetInputSize() { return get_output_FFT_size( FFTSize ); };
+    static constexpr size_t GetInputSize() { return veclib::get_output_FFT_size( FFTSize ); };
     
     const std::vector< double >& PushFrames( const std::vector< std::array< std::complex< double >, GetInputSize() > >& STFTFrames );
     
@@ -63,7 +62,7 @@ private:
     //
     // Mechanics
     //
-    FFTConfig mFFTConfig;
+    veclib::FFTConfig mFFTConfig;
     double mNormalisationMult;
     
     //
@@ -101,7 +100,7 @@ STFTSynthesis< FFTSize >::STFTSynthesis( size_t sample_increment, const std::vec
 ///
 {
     CheckParameters();
-    make_FFT( FFTSize, mFFTConfig );
+    veclib::make_FFT( FFTSize, mFFTConfig );
 }
     
 template< uint64_t FFTSize >
@@ -127,7 +126,7 @@ STFTSynthesis< FFTSize >::STFTSynthesis( double overlap, const std::vector< doub
 ///
 {
     CheckParameters();
-    make_FFT( FFTSize, mFFTConfig );
+    veclib::make_FFT( FFTSize, mFFTConfig );
 }
 
 template< uint64_t FFTSize >
@@ -150,7 +149,7 @@ STFTSynthesis< FFTSize >::STFTSynthesis( const STFTAnalysis< FFTSize >& analysis
 ///
 {
     CheckParameters();
-    make_FFT( FFTSize, mFFTConfig );
+    veclib::make_FFT( FFTSize, mFFTConfig );
 }
 
 template< uint64_t FFTSize >
@@ -185,7 +184,7 @@ const std::vector< double >& STFTSynthesis< FFTSize >::PushFrames( const std::ve
         
         // IFFT
         mTempBuffer.resize( FFTSize );
-        IFFT_not_in_place( spec.data(), mTempBuffer.data(), mFFTConfig );
+        veclib::IFFT_not_in_place( spec.data(), mTempBuffer.data(), mFFTConfig );
         
         // Truncate
         mTempBuffer.resize( mWinLen );
@@ -202,7 +201,7 @@ const std::vector< double >& STFTSynthesis< FFTSize >::PushFrames( const std::ve
     mOutputBuffer.resize( mOverlapAddBuffer.NumSamples() );
     mOverlapAddBuffer.Read( mOutputBuffer );
     mOverlapAddBuffer.PopFront( mOutputBuffer.size() );
-    vec_mult_const_in_place( mOutputBuffer.data(), mNormalisationMult, mOutputBuffer.size() );
+    veclib::vec_mult_const_in_place( mOutputBuffer.data(), mNormalisationMult, mOutputBuffer.size() );
     
     return mOutputBuffer;
 

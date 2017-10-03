@@ -9,10 +9,10 @@
 #define CUPCAKE_OVERLAP_ADD_BUFFER_H
 
 // In module includes
-#include "vector_functions.h"
+// None.
 
 // Thirdparty includes
-// None.
+#include "vector_functions.h"
 
 // Std Lib includes
 #include <vector>
@@ -119,11 +119,11 @@ void OverlapAddBuffer< T >::PushSamples( const std::vector< T >& samples )
     
     size_t samples_until_end = mBufferLength - mWriteHead;
     
-    vec_add_in_place( samples.data(), mData.data() + mWriteHead, std::min( samples.size(), samples_until_end ) );
+    veclib::vec_add_in_place( samples.data(), mData.data() + mWriteHead, std::min( samples.size(), samples_until_end ) );
     
     if( samples.size() > samples_until_end )
     {
-        vec_add_in_place( samples.data() + samples_until_end, mData.data(), samples.size() - samples_until_end );
+        veclib::vec_add_in_place( samples.data() + samples_until_end, mData.data(), samples.size() - samples_until_end );
     }
     
 }
@@ -165,7 +165,7 @@ void OverlapAddBuffer< T >::PopFront( size_t numElements )
     vec_zero( mData.data() + mReadHead, std::min( mBufferLength - mReadHead, numElements ) );
     if( numElements > ( mBufferLength - mReadHead ) )
     {
-        vec_zero( mData.data(), numElements - ( mBufferLength - mReadHead ) );
+        veclib::vec_zero( mData.data(), numElements - ( mBufferLength - mReadHead ) );
     }
     mReadHead = ( mReadHead + numElements ) % mBufferLength;
     
@@ -186,11 +186,11 @@ void OverlapAddBuffer< T >::Read( std::vector< double >& output )
     
     assert( output.size() <= NumSamples() );
     
-    vec_copy( mData.data() + mReadHead, output.data(), std::min( mBufferLength - mReadHead, output.size() ) );
+    veclib::vec_copy( mData.data() + mReadHead, output.data(), std::min( mBufferLength - mReadHead, output.size() ) );
     
     if( output.size() > ( mBufferLength - mReadHead ) )
     {
-        vec_copy( mData.data(), output.data() + ( mBufferLength - mReadHead ), output.size() - ( mBufferLength - mReadHead ) );
+        veclib::vec_copy( mData.data(), output.data() + ( mBufferLength - mReadHead ), output.size() - ( mBufferLength - mReadHead ) );
     }
     
 }

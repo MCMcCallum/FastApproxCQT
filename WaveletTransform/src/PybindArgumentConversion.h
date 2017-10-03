@@ -7,10 +7,16 @@
 // @todo [matt.mccallum 10.02.17] This wrapping of C++ argument types should probably be
 //                                sitting in its own codebase as an extension to pybind11.
 
+// In module includes.
+// None.
+
+// Third party includes.
 #include "pybind/pybind11.h"
 #include "pybind/numpy.h"
 #include "pybind/complex.h"
-#include <iostream>
+
+// Std lib includes.
+// None.
 
 namespace py = pybind11;
 

@@ -15,7 +15,7 @@
 #include "sig_gen.h"
 
 // Std Lib includes
-// None.
+#include <math.h>
 
 namespace cupcake
 {
@@ -24,7 +24,7 @@ template< size_t FFT_SIZE >
 class FastCQT
 {
     
-    static const size_t IO_SIZE = get_output_FFT_size( FFT_SIZE );
+    static const size_t IO_SIZE = veclib::get_output_FFT_size( FFT_SIZE );
     
 public:
     
@@ -117,8 +117,8 @@ void FastCQT< FFT_SIZE >::CalculateFilterCoefficients()
 {
     // Create a logarithmic function for the amplitude of each smoothing coefficient.
     std::vector<float> domain( IO_SIZE );
-    linspace( 0.01, 100.0, domain );    // <= At the moment the range [0.01, 100.0] here is arbitrary, it depends largely
-                                        //    on how quickly you want to adapt to a smaller windowing size across frequency.
+    veclib::linspace( 0.01, 100.0, domain );    // <= At the moment the range [0.01, 100.0] here is arbitrary, it depends largely
+                                                //    on how quickly you want to adapt to a smaller windowing size across frequency.
     std::for_each( domain.begin(), domain.end(),
         []( float& value )
         {
