@@ -24,6 +24,7 @@ First you'll need to install IPP.
 If you're on OSX the rest of the procedure is simple:
  * `git clone https://github.com/MCMcCallum/FastApproxCQT`
  * `git submodule init`
+ * `git submodule update`
  * `run ./pull_thirdparty_osx.sh`
 
 Unfortunately no scripts have been written for other operating systems yet. Yet to come...
@@ -41,3 +42,5 @@ Demo
 There is a simple demo for which you can view the results of the C++ module and an equivalent Python implementation.
 
 Simply run `python Demo.py`.
+
+The python packages reguired for this demo are listed in `./requirements.txt`.
