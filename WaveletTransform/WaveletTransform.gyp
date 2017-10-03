@@ -1,7 +1,7 @@
   {
     'includes': 
     [
-      '../../../build/common.gypi',
+      './common.gypi',
       './VecLib/VecLib.gypi',
     ],
     'targets': 
@@ -51,8 +51,6 @@
           'src/FastCQT.h',
           'src/FastWavelet.h',
           'src/FastWavelet.cpp',
-          'src/FastWaveletPythonBinding.cpp',
-          'src/PybindArgumentConversion.h',
           'src/OverlapAddBuffer.h',
           'src/STFTAnalysis.h',
           'src/STFTSynthesis.h',
