@@ -1,7 +1,7 @@
 FastApproxCQT
 =============
 
-A C++ implementation of a transform that is kind of like the CQT except super fast.
+A C++ implementation of a transform that is kind of like the continuous Q transform (CQT) except super fast.
 
 Written by Matt C. McCallum.
 
@@ -13,6 +13,7 @@ This code depends on:
  * [IPP](https://software.intel.com/en-us/intel-ipp/details)
  * [VecLib](https://github.com/MCMcCallum/VecLib)
  * [PyBind11](https://github.com/MCMcCallum/pybind11)
+ * [GTest](https://github.com/google/googletest)
 
 Help with installing IPP can be found [here](https://software.intel.com/en-us/intel-ipp/details).
 
@@ -25,7 +26,7 @@ If you're on OSX the rest of the procedure is simple:
  * `git clone https://github.com/MCMcCallum/FastApproxCQT`
  * `git submodule init`
  * `git submodule update`
- * `run ./pull_thirdparty_osx.sh`
+ * run `./pull_thirdparty_osx.sh`
 
 Unfortunately no scripts have been written for other operating systems yet. Yet to come...
 
@@ -43,4 +44,4 @@ There is a simple demo for which you can view the results of the C++ module and 
 
 Simply run `python Demo.py`.
 
-The python packages reguired for this demo are listed in `./requirements.txt`.
+The python packages required for this demo are listed in `./requirements.txt`.

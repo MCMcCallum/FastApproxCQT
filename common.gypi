@@ -37,11 +37,11 @@
         '-dynamic',
         '-g',
         '-Os',
-        '-pipe', # Not required?
+        '-pipe',
         '-fwrapv',
-        '-Wall',              # Warnings
-        '-Wstrict-prototypes',# Warnings
-        '-Wshorten-64-to-32', # Warnings
+        '-Wall',
+        '-Wstrict-prototypes',
+        '-Wshorten-64-to-32',
       ],
       'CLANG_CXX_LANGUAGE_STANDARD'       : 'c++14',
       'CLANG_CXX_LIBRARY'                 : 'libc++',

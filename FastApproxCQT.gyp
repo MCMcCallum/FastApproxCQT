@@ -7,7 +7,7 @@
     'targets': 
     [
       {
-        'target_name': 'WaveletTransformLib',
+        'target_name': 'FastApproxCQT',
         'type': 'shared_library',
         'include_dirs': 
         [
@@ -37,7 +37,7 @@
       },
 
       {
-        'target_name': 'test',
+        'target_name': 'Test',
         'type': 'executable',
 
         'include_dirs': 
