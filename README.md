@@ -1,7 +1,7 @@
 FastApproxCQT
 =============
 
-A C++ implementation of a transform that is kind of like the continuous Q transform (CQT) except super fast.
+A C++ implementation of a transform that is kind of like the constant Q transform (CQT) except super fast.
 
 Written by Matt C. McCallum.
 
